@@ -1,0 +1,19 @@
+services:
+  db:
+    image: postgres:16
+    container_name: ai-sales-postgres
+
+    environment:
+      POSTGRES_DB: ai_sales
+      POSTGRES_USER: ai_user
+      POSTGRES_PASSWORD: ai_password
+
+    ports:
+      - "5432:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+
+volumes:
+  postgres_data:
