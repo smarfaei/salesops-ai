@@ -1,0 +1,56 @@
+[
+  {
+    "name": "Mahdi",
+    "company": "Techflow",
+    "employees": 50,
+    "need": "ai agents",
+    "budget": 3000,
+    "score": 70,
+    "status": "Hot Lead"
+  },
+  {
+    "name": "Reza",
+    "company": "Arvan",
+    "employees": 20,
+    "need": "Ai answer the call",
+    "budget": 1000,
+    "score": 55,
+    "status": "Warm Lead"
+  },
+  {
+    "name": "Kasra",
+    "company": "Snapp",
+    "employees": 12,
+    "need": "12",
+    "budget": 100,
+    "score": 10,
+    "status": "Cold Lead"
+  },
+  {
+    "name": "David",
+    "company": "SmartCommerce",
+    "employees": 75,
+    "need": "AI Customer Support Agent",
+    "budget": 6000,
+    "score": 90,
+    "status": "Hot Lead"
+  },
+  {
+    "name": "David",
+    "company": "SmartCommerce",
+    "employees": 75,
+    "need": "AI Customer Support Agent",
+    "budget": 6000,
+    "score": 90,
+    "status": "Hot Lead"
+  },
+  {
+    "name": "Alex",
+    "company": "NovaTech",
+    "employees": 60,
+    "need": "AI Sales Agent",
+    "budget": 7000,
+    "score": 90,
+    "status": "Hot Lead"
+  }
+]
