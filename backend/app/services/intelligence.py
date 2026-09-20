@@ -2,6 +2,7 @@ import logging
 from dataclasses import dataclass
 from datetime import datetime, timezone
 
+from fastapi import Request
 from pydantic import ValidationError
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -9,7 +10,7 @@ from sqlalchemy.orm import Session
 from app.ai.factory import create_ai_provider
 from app.ai.providers.base import AIProvider, AIProviderError
 from app.ai.providers.local import LocalAIProvider
-from app.core.config import settings
+from app.core.demo import get_request_settings
 from app.core.enums import ActivityType, TaskStatus
 from app.models.activity import Activity
 from app.models.intelligence import LeadIntelligence
@@ -165,7 +166,8 @@ def intelligence_to_response(record: LeadIntelligence) -> LeadIntelligenceRespon
     )
 
 
-def get_sales_intelligence_service() -> SalesIntelligenceService:
+def get_sales_intelligence_service(request: Request) -> SalesIntelligenceService:
+    settings = get_request_settings(request)
     provider = create_ai_provider(settings)
     fallback = LocalAIProvider() if settings.ai_allow_fallback and provider.name != "local" else None
     return SalesIntelligenceService(provider, fallback_provider=fallback)

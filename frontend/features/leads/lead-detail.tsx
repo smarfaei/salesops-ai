@@ -14,6 +14,7 @@ import { ErrorState, LoadingState } from "@/components/ui/state";
 import { IntelligencePanel } from "@/features/intelligence/intelligence-panel";
 import { ActivityTimeline } from "@/features/activities/activity-timeline";
 import { TaskCenter } from "@/features/tasks/task-center";
+import { DEMO_MODE } from "@/lib/config";
 export function LeadDetail({ leadId }: { leadId: number }) {
   const loader = useCallback(() => api.lead(leadId), [leadId]);
   const { data: lead, loading, error, reload } = useApi(loader);
@@ -62,12 +63,14 @@ export function LeadDetail({ leadId }: { leadId: number }) {
               <option key={x}>{x}</option>
             ))}
           </Select>
-          <Link href={`/leads/${lead.id}/edit`}>
-            <Button variant="outline">
-              <Edit3 className="size-4" />
-              Edit lead
-            </Button>
-          </Link>
+          {!DEMO_MODE && (
+            <Link href={`/leads/${lead.id}/edit`}>
+              <Button variant="outline">
+                <Edit3 className="size-4" />
+                Edit lead
+              </Button>
+            </Link>
+          )}
         </div>
       </div>
       {actionError && (

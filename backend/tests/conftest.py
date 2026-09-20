@@ -6,6 +6,8 @@ from pathlib import Path
 os.environ["DATABASE_URL"] = "sqlite+pysqlite:///:memory:"
 os.environ["APP_ENV"] = "test"
 os.environ["DEBUG"] = "false"
+os.environ["DEMO_MODE"] = "false"
+os.environ["CORS_ORIGINS"] = "http://localhost:3000"
 
 BACKEND_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(BACKEND_DIR))

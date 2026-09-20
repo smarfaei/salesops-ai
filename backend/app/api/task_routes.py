@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy import asc, desc, func, select
 from sqlalchemy.orm import Session
 
+from app.core.demo import block_in_demo_mode
 from app.core.enums import TaskPriority, TaskStatus
 from app.db.session import get_db
 from app.models.lead import Lead
@@ -154,7 +155,11 @@ def mark_task_cancelled(task_id: int, db: Session = Depends(get_db)) -> TaskResp
 
 
 @router.delete("/tasks/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_task(task_id: int, db: Session = Depends(get_db)) -> Response:
+def delete_task(
+    task_id: int,
+    db: Session = Depends(get_db),
+    _demo_guard: None = Depends(block_in_demo_mode),
+) -> Response:
     task = _get_task_or_404(db, task_id)
     db.delete(task)
     db.commit()

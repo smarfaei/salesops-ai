@@ -24,7 +24,7 @@ def test_demo_seed_is_realistic_and_idempotent(db_session: Session):
 
 
 def test_demo_intelligence_is_local_and_repeatable(db_session: Session):
-    seed_demo_data(db_session, reset=True)
+    seed_demo_data(db_session, reset=True, demo_mode=True)
     lead_id = seed_demo_intelligence(db_session)
     second_lead_id = seed_demo_intelligence(db_session)
     records = list(db_session.scalars(select(LeadIntelligence)).all())

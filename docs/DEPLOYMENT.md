@@ -34,26 +34,54 @@ If the platform does not interpolate `$PORT` in a process command, configure its
 
 ## Required Environment Variables
 
-| Variable                 | Service        | Notes                                                            |
-| ------------------------ | -------------- | ---------------------------------------------------------------- |
-| `DATABASE_URL`           | Backend        | Managed PostgreSQL URL using the `postgresql+psycopg://` dialect |
-| `APP_ENV`                | Backend        | Set to `production`                                              |
-| `DEBUG`                  | Backend        | Set to `false`                                                   |
-| `CORS_ORIGINS`           | Backend        | Exact comma-separated HTTPS frontend origins                     |
-| `NEXT_PUBLIC_API_URL`    | Frontend build | Public HTTPS API origin                                          |
-| `AI_PROVIDER`            | Backend        | Keep `local` unless OpenAI is intentionally configured           |
-| `AI_ALLOW_FALLBACK`      | Backend        | Recommended `true`                                               |
-| `OPENAI_API_KEY`         | Backend        | Optional secret; only for the OpenAI provider                    |
-| `OPENAI_MODEL`           | Backend        | Required when using OpenAI                                       |
-| `OPENAI_TIMEOUT_SECONDS` | Backend        | Optional; default 20 seconds                                     |
+| Variable                         | Service        | Notes                                                            |
+| -------------------------------- | -------------- | ---------------------------------------------------------------- |
+| `DATABASE_URL`                   | Backend        | Managed PostgreSQL URL using the `postgresql+psycopg://` dialect |
+| `APP_ENV`                        | Backend        | Set to `production`                                              |
+| `DEBUG`                          | Backend        | Set to `false`                                                   |
+| `DEMO_MODE`                      | Backend        | Set to `true` only for the isolated public portfolio demo        |
+| `DEMO_RATE_LIMIT_REQUESTS`       | Backend        | Maximum demo writes per client IP in each window; default `60`   |
+| `DEMO_RATE_LIMIT_WINDOW_SECONDS` | Backend        | Rate-limit window; default `60`                                  |
+| `CORS_ORIGINS`                   | Backend        | Exact comma-separated HTTPS frontend origins                     |
+| `NEXT_PUBLIC_API_URL`            | Frontend build | Public HTTPS API origin                                          |
+| `NEXT_PUBLIC_DEMO_MODE`          | Frontend build | Set to `true` with the backend public-demo deployment            |
+| `AI_PROVIDER`                    | Backend        | Keep `local` unless OpenAI is intentionally configured           |
+| `AI_ALLOW_FALLBACK`              | Backend        | Recommended `true`                                               |
+| `OPENAI_API_KEY`                 | Backend        | Optional secret; only for the OpenAI provider                    |
+| `OPENAI_MODEL`                   | Backend        | Required when using OpenAI                                       |
+| `OPENAI_TIMEOUT_SECONDS`         | Backend        | Optional; default 20 seconds                                     |
 
 Do not expose `POSTGRES_PASSWORD`, `DATABASE_URL`, or `OPENAI_API_KEY` to the frontend.
+
+## Public Portfolio Demo Mode
+
+Use a dedicated database that contains no customer or personal data. Configure:
+
+```text
+APP_ENV=production
+DEBUG=false
+DEMO_MODE=true
+NEXT_PUBLIC_DEMO_MODE=true
+AI_PROVIDER=local
+CORS_ORIGINS=https://your-frontend.example
+```
+
+Do not configure `OPENAI_API_KEY` for the public demo. When `DEMO_MODE=true`, the backend forces the local provider, clears OpenAI configuration in application settings, forces debug off, disables lead creation/edit/deletion and task deletion, and removes `/docs`, `/redoc`, and `/openapi.json`. Pipeline changes, demo activities, demo tasks, and local intelligence remain available. The UI tells visitors to use fictional data only. A lightweight in-memory rate limit protects state-changing requests; use a gateway-level limiter as well if the demo receives significant traffic or runs with multiple API replicas.
+
+After migrations, initialize or restore the dedicated demo database explicitly:
+
+```bash
+cd backend
+python -m app.seed --reset --with-intelligence
+```
+
+The reset command refuses to run unless `DEMO_MODE=true`. In demo mode it deletes all rows from the dedicated lead dataset and recreates only the six fictional scenarios. Never point a demo-mode deployment at a customer or production database.
 
 ## Database Migrations
 
 Run `alembic upgrade head` exactly once per deployment release before accepting API traffic. Use a platform release command or a short-lived migration job when multiple API replicas are deployed.
 
-Do not run demo reset against a production database. Demo data is created only by the explicit `python -m app.seed` command.
+Do not run demo reset against a customer database. Demo data is created only by the explicit guarded command documented above.
 
 ## CORS
 
@@ -77,14 +105,14 @@ The repository includes production-oriented backend and frontend Dockerfiles. Th
 - Store all secrets in the deployment platform, not Git or build arguments.
 - Run migrations before starting the new API release.
 - Confirm `/health`, frontend loading, API calls, and intelligence generation after deployment.
-- Add authentication and tenant isolation before storing real customer data.
+- Keep the public demo database isolated and fictional; add authentication and tenant isolation before storing real customer data.
 - Add rate limiting, monitoring, error reporting, and a backup restore test before public production use.
 
 ## Post-Deploy Smoke Test
 
 1. Check `GET /health` returns database connected.
 2. Load the Dashboard from the production frontend.
-3. Create a disposable non-sensitive lead and verify scoring.
-4. Generate local intelligence and verify the advisory label.
-5. Create/complete a task and change a pipeline stage.
-6. Remove the disposable record through an approved administrative workflow.
+3. Confirm lead creation, lead editing, lead deletion, task deletion, and API docs return `403`/`404` as appropriate.
+4. Generate local intelligence and verify the advisory label and `local` provider.
+5. Create/complete a demo task, add a demo activity, and change a pipeline stage.
+6. Run the guarded reset and confirm the six fictional records are restored.

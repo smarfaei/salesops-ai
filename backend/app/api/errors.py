@@ -36,10 +36,16 @@ def install_exception_handlers(app: FastAPI) -> None:
     async def database_exception_handler(
         request: Request, exc: SQLAlchemyError
     ) -> JSONResponse:
-        logger.exception("Database operation failed for %s", request.url.path, exc_info=exc)
+        if request.app.state.settings.demo_mode:
+            logger.error("Database operation failed for %s", request.url.path)
+        else:
+            logger.exception("Database operation failed for %s", request.url.path, exc_info=exc)
         return _error(500, "database_error", "A database operation failed")
 
     @app.exception_handler(Exception)
     async def unexpected_exception_handler(request: Request, exc: Exception) -> JSONResponse:
-        logger.exception("Unexpected error for %s", request.url.path, exc_info=exc)
+        if request.app.state.settings.demo_mode:
+            logger.error("Unexpected error for %s", request.url.path)
+        else:
+            logger.exception("Unexpected error for %s", request.url.path, exc_info=exc)
         return _error(500, "internal_error", "An unexpected error occurred")

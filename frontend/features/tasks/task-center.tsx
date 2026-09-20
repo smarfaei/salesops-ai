@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input, Label, Select, Textarea } from "@/components/ui/form-controls";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/state";
+import { DEMO_MODE } from "@/lib/config";
 type View = "pending" | "upcoming" | "overdue" | "completed" | "cancelled";
 export function TaskCenter({
   leadId,
@@ -215,19 +216,21 @@ export function TaskCenter({
                       </Button>
                     </>
                   )}
-                  <Button
-                    aria-label="Delete task"
-                    title="Delete"
-                    variant="ghost"
-                    size="icon"
-                    className="text-rose-600"
-                    onClick={() => {
-                      if (confirm("Delete this task?"))
-                        void mutate(() => api.deleteTask(task.id));
-                    }}
-                  >
-                    <Trash2 className="size-4" />
-                  </Button>
+                  {!DEMO_MODE && (
+                    <Button
+                      aria-label="Delete task"
+                      title="Delete"
+                      variant="ghost"
+                      size="icon"
+                      className="text-rose-600"
+                      onClick={() => {
+                        if (confirm("Delete this task?"))
+                          void mutate(() => api.deleteTask(task.id));
+                      }}
+                    >
+                      <Trash2 className="size-4" />
+                    </Button>
+                  )}
                 </div>
               </div>
             ))}

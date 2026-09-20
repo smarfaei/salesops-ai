@@ -36,4 +36,21 @@ describe("API client", () => {
       status: 404,
     });
   });
+  it("surfaces structured public-demo restriction messages", async () => {
+    vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          error: {
+            code: "http_error",
+            message: "This operation is disabled in the public demo",
+          },
+        }),
+        { status: 403, headers: { "Content-Type": "application/json" } },
+      ),
+    );
+    await expect(api.createLead({} as never)).rejects.toMatchObject({
+      message: "This operation is disabled in the public demo",
+      status: 403,
+    });
+  });
 });

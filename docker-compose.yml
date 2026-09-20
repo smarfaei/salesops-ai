@@ -24,12 +24,15 @@ services:
       DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL in .env}
       APP_ENV: ${APP_ENV:-development}
       DEBUG: ${DEBUG:-false}
+      DEMO_MODE: ${DEMO_MODE:-false}
+      DEMO_RATE_LIMIT_REQUESTS: ${DEMO_RATE_LIMIT_REQUESTS:-60}
+      DEMO_RATE_LIMIT_WINDOW_SECONDS: ${DEMO_RATE_LIMIT_WINDOW_SECONDS:-60}
       AI_PROVIDER: ${AI_PROVIDER:-local}
       AI_ALLOW_FALLBACK: ${AI_ALLOW_FALLBACK:-true}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OPENAI_MODEL: ${OPENAI_MODEL:-}
       OPENAI_TIMEOUT_SECONDS: ${OPENAI_TIMEOUT_SECONDS:-20}
-      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
+      CORS_ORIGINS: ${CORS_ORIGINS:?Set CORS_ORIGINS in .env}
     ports:
       - "${API_PORT:-8001}:8000"
     depends_on:
@@ -39,7 +42,13 @@ services:
       sh -c "alembic upgrade head &&
       uvicorn app.main:app --host 0.0.0.0 --port 8000"
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')",
+        ]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -51,15 +60,23 @@ services:
       dockerfile: frontend/Dockerfile
       args:
         NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8001}
+        NEXT_PUBLIC_DEMO_MODE: ${DEMO_MODE:-false}
     environment:
       NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:8001}
+      NEXT_PUBLIC_DEMO_MODE: ${DEMO_MODE:-false}
     ports:
       - "${FRONTEND_PORT:-3000}:3000"
     depends_on:
       api:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://localhost:3000').then(r => { if (!r.ok) process.exit(1) }).catch(() => process.exit(1))"]
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://localhost:3000').then(r => { if (!r.ok) process.exit(1) }).catch(() => process.exit(1))",
+        ]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -67,5 +84,3 @@ services:
 
 volumes:
   postgres_data:
-
-

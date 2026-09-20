@@ -11,6 +11,7 @@ import {
   Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { DEMO_MODE } from "@/lib/config";
 const nav = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/leads", label: "Leads", icon: Users },
@@ -56,10 +57,12 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </nav>
         <div className="absolute bottom-5 left-4 right-4 rounded-xl border border-white/10 bg-white/5 p-4">
           <p className="text-xs font-semibold text-white">
-            AI-assisted decisions
+            {DEMO_MODE ? "Safe public demo" : "AI-assisted decisions"}
           </p>
           <p className="mt-1 text-xs leading-5 text-slate-400">
-            Recommendations support your sales team; people make the final call.
+            {DEMO_MODE
+              ? "Fictional data only. Destructive controls are disabled and changes may be reset."
+              : "Recommendations support your sales team; people make the final call."}
           </p>
         </div>
       </aside>
@@ -75,6 +78,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 Portfolio Demo
               </p>
               <p className="text-xs text-slate-500">Sales operations</p>
+              {DEMO_MODE && (
+                <p className="text-[10px] font-semibold uppercase tracking-wide text-emerald-700">
+                  Safe public demo
+                </p>
+              )}
             </div>
             <div className="flex size-9 items-center justify-center rounded-full bg-slate-900 text-xs font-bold text-white">
               SO

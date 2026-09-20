@@ -31,10 +31,12 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     try {
       const body = await response.json();
       message =
-        typeof body.detail === "string"
-          ? body.detail
-          : body.detail?.map((e: { msg: string }) => e.msg).join(", ") ||
-            message;
+        typeof body.error?.message === "string"
+          ? body.error.message
+          : typeof body.detail === "string"
+            ? body.detail
+            : body.detail?.map((e: { msg: string }) => e.msg).join(", ") ||
+              message;
     } catch {}
     throw new ApiError(message, response.status);
   }

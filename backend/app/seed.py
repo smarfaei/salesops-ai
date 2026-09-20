@@ -5,6 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.ai.providers.local import LocalAIProvider
+from app.core.config import settings
 from app.core.enums import ActivityType, PipelineStage, TaskPriority, TaskStatus
 from app.db.session import SessionLocal
 from app.models.lead import Lead
@@ -77,11 +78,15 @@ DEMO_LEADS = [
 ]
 
 
-def seed_demo_data(db: Session, *, reset: bool = False) -> dict[str, int]:
+def seed_demo_data(
+    db: Session, *, reset: bool = False, demo_mode: bool = False
+) -> dict[str, int]:
     companies = [item["company"] for item in DEMO_LEADS]
     existing = list(db.scalars(select(Lead).where(Lead.company.in_(companies))).all())
     if reset:
-        for lead in existing:
+        if not demo_mode:
+            raise RuntimeError("Demo reset requires DEMO_MODE=true")
+        for lead in db.scalars(select(Lead)).all():
             db.delete(lead)
         db.flush()
         existing = []
@@ -170,8 +175,10 @@ def main() -> None:
         help="Generate deterministic local intelligence for OrbitFlow SaaS",
     )
     args = parser.parse_args()
+    if args.reset and not settings.demo_mode:
+        parser.error("--reset requires DEMO_MODE=true")
     with SessionLocal() as db:
-        result = seed_demo_data(db, reset=args.reset)
+        result = seed_demo_data(db, reset=args.reset, demo_mode=settings.demo_mode)
         intelligence_lead_id = seed_demo_intelligence(db) if args.with_intelligence else None
     print(f"Demo data ready: {result['created']} created, {result['existing']} already existed")
     if intelligence_lead_id is not None:

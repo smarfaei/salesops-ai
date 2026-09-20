@@ -47,7 +47,7 @@ cd backend
 python -m app.seed --reset --with-intelligence
 ```
 
-The command replaces only the six known demo companies and preserves unrelated leads. It never runs automatically at application startup. For the portfolio walkthrough:
+The reset command is accepted only when `DEMO_MODE=true`. It clears the dedicated demo database and recreates only the six fictional scenarios; it never runs automatically at application startup. Keep `DEMO_MODE=false` for ordinary local development. For the portfolio walkthrough:
 
 1. Review live KPIs and distributions on the Dashboard.
 2. Open **OrbitFlow SaaS** and inspect its Hot score and Qualified stage.
@@ -152,7 +152,7 @@ npm install
 npm run dev
 ```
 
-`NEXT_PUBLIC_API_URL` selects the browser-facing API URL. `CORS_ORIGINS` is a comma-separated backend allowlist; the local default is `http://localhost:3000`. `API_PORT` and `FRONTEND_PORT` configure the Docker host ports.
+`NEXT_PUBLIC_API_URL` selects the browser-facing API URL. `CORS_ORIGINS` is a required, comma-separated backend allowlist; `.env.example` uses `http://localhost:3000` for local development. `API_PORT` and `FRONTEND_PORT` configure the Docker host ports.
 
 ## Docker
 

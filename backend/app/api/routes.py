@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy import asc, desc, func, or_, select, text
 from sqlalchemy.orm import Session
 
+from app.core.demo import block_in_demo_mode
 from app.core.enums import ActivityType, PipelineStage, TaskStatus
 from app.db.session import get_db
 from app.models.activity import Activity
@@ -109,7 +110,11 @@ def get_all_leads(
 
 
 @router.post("/leads", response_model=LeadResponse, status_code=status.HTTP_201_CREATED, tags=["leads"])
-def create_lead(payload: LeadCreate, db: Session = Depends(get_db)) -> LeadResponse:
+def create_lead(
+    payload: LeadCreate,
+    db: Session = Depends(get_db),
+    _demo_guard: None = Depends(block_in_demo_mode),
+) -> LeadResponse:
     result = score_lead(payload.budget, payload.employees, payload.need)
     lead = Lead(**payload.model_dump(), score=result.score, status=result.status, score_reasons=result.reasons)
     db.add(lead)
@@ -184,7 +189,12 @@ def change_lead_stage(
 
 
 @router.patch("/leads/{lead_id}", response_model=LeadResponse, tags=["leads"])
-def update_lead(lead_id: int, payload: LeadUpdate, db: Session = Depends(get_db)) -> LeadResponse:
+def update_lead(
+    lead_id: int,
+    payload: LeadUpdate,
+    db: Session = Depends(get_db),
+    _demo_guard: None = Depends(block_in_demo_mode),
+) -> LeadResponse:
     lead = db.get(Lead, lead_id)
     if lead is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Lead not found")
@@ -218,7 +228,11 @@ def update_lead(lead_id: int, payload: LeadUpdate, db: Session = Depends(get_db)
 
 
 @router.delete("/leads/{lead_id}", status_code=status.HTTP_204_NO_CONTENT, tags=["leads"])
-def delete_lead(lead_id: int, db: Session = Depends(get_db)) -> Response:
+def delete_lead(
+    lead_id: int,
+    db: Session = Depends(get_db),
+    _demo_guard: None = Depends(block_in_demo_mode),
+) -> Response:
     lead = db.get(Lead, lead_id)
     if lead is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Lead not found")

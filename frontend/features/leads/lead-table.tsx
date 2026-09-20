@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Input, Select } from "@/components/ui/form-controls";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/state";
 import { LeadSummary } from "./lead-summary";
+import { DEMO_MODE } from "@/lib/config";
 export function LeadTable() {
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
@@ -107,12 +108,14 @@ export function LeadTable() {
           title="No leads found"
           description="Adjust the filters or create a lead to begin qualification."
           action={
-            <Link href="/leads/new">
-              <Button>
-                <Plus className="size-4" />
-                New lead
-              </Button>
-            </Link>
+            !DEMO_MODE && (
+              <Link href="/leads/new">
+                <Button>
+                  <Plus className="size-4" />
+                  New lead
+                </Button>
+              </Link>
+            )
           }
         />
       ) : (

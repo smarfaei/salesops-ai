@@ -6,7 +6,9 @@ RUN npm ci
 FROM node:24-alpine AS builder
 WORKDIR /app
 ARG NEXT_PUBLIC_API_URL=http://localhost:8001
+ARG NEXT_PUBLIC_DEMO_MODE=false
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_DEMO_MODE=$NEXT_PUBLIC_DEMO_MODE
 COPY --from=dependencies /app/node_modules ./node_modules
 COPY frontend/ ./
 RUN npm run build
