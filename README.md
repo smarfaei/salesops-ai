@@ -2,7 +2,7 @@
 
 **AI-Powered Lead Qualification & Sales Automation Platform**
 
-SalesOps AI helps sales teams capture, qualify, prioritize, and act on incoming leads. The project currently contains **Phase 2: Sales Workflow**—a production-style mini CRM backend with explainable lead scoring, pipeline management, activity history, follow-up tasks, PostgreSQL persistence, migrations, tests, and a reproducible Docker workflow.
+SalesOps AI helps sales teams capture, qualify, prioritize, and act on incoming leads. The project currently contains **Phase 3: AI Sales Intelligence**—a production-style mini CRM backend with explainable lead scoring, pipeline management, activity history, follow-up tasks, and provider-based sales intelligence that works without a paid API.
 
 ## Current features
 
@@ -12,6 +12,10 @@ SalesOps AI helps sales teams capture, qualify, prioritize, and act on incoming 
 - Automatic and manual lead activity timeline
 - Follow-up tasks with priorities, lifecycle states, overdue and upcoming views
 - Lead detail view model for a future professional frontend
+- Structured qualification summaries, buying signals, risks, and next-best actions
+- Personalized follow-up subject and message generation
+- Deterministic local intelligence provider requiring no API account
+- Optional OpenAI provider with structured-output validation and local fallback
 - Search across lead name, company, and need
 - Filter by qualification status, pipeline stage, and score range
 - Pagination and safe field-based sorting
@@ -34,12 +38,13 @@ SalesOps AI helps sales teams capture, qualify, prioritize, and act on incoming 
 ```text
 backend/
 ├── app/
+│   ├── ai/         # local and optional OpenAI providers
 │   ├── api/        # routes and HTTP error handling
 │   ├── core/       # settings and logging
 │   ├── db/         # SQLAlchemy base and sessions
 │   ├── models/     # persistence models
 │   ├── schemas/    # request and response contracts
-│   ├── services/   # scoring, pipeline, activity, and task business logic
+│   ├── services/   # workflow and sales-intelligence orchestration
 │   ├── seed.py     # explicit, idempotent portfolio demo data
 │   └── main.py     # FastAPI application
 ├── alembic/        # database migrations
@@ -47,7 +52,26 @@ backend/
 └── alembic.ini
 ```
 
-The HTTP layer validates input and coordinates requests. Business rules live in focused service modules. SQLAlchemy models define `Lead → Activities` and `Lead → Tasks` relationships with database-enforced cascading. Pydantic schemas define every public API response. Tables are created only through Alembic migrations.
+The HTTP layer validates input and coordinates requests. Business rules live in focused service modules. SQLAlchemy models define `Lead → Activities`, `Lead → Tasks`, and `Lead → Latest Intelligence` relationships with database-enforced cascading. Pydantic schemas define every public API and provider response. Tables are created only through Alembic migrations.
+
+### AI provider flow
+
+```text
+Lead + Score + Pipeline + Recent Activities + Pending Tasks
+                            │
+                            ▼
+               Sales Intelligence Service
+                   ┌────────┴────────┐
+                   ▼                 ▼
+          Local AI Provider    OpenAI Provider
+          deterministic        optional + validated
+                   └────────┬────────┘
+                            ▼
+       Summary + Signals + Risks + Action + Follow-up
+                            │
+                            ▼
+                Latest result persisted
+```
 
 ## Quick start with Docker
 
@@ -80,6 +104,18 @@ pip install -r requirements-dev.txt
 ```
 
 Create `.env` from `.env.example`. When running the API outside Docker, change the database hostname in `DATABASE_URL` from `db` to `localhost`.
+
+### AI configuration
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `AI_PROVIDER` | `local` | Select `local` or `openai` |
+| `AI_ALLOW_FALLBACK` | `true` | Fall back to local intelligence after provider failure |
+| `OPENAI_API_KEY` | empty | Optional API key; never commit it |
+| `OPENAI_MODEL` | empty | Model available to your OpenAI project |
+| `OPENAI_TIMEOUT_SECONDS` | `20` | External provider timeout |
+
+The default local provider is deterministic, explainable, and requires no network access. To opt into OpenAI, set `AI_PROVIDER=openai`, provide the API key and model through `.env`, and restart the API. The OpenAI provider uses the Responses API with a strict JSON schema, disables provider-side response storage for the request, handles timeouts/API failures/malformed output, and never logs the API key or raw request.
 
 Apply migrations from the backend directory:
 
@@ -125,6 +161,45 @@ The suite covers scoring, Phase 1 CRUD, pipeline transitions and history, activi
 | `GET/PATCH/DELETE` | `/tasks/{id}` | Retrieve, update, or delete a task |
 | `POST` | `/tasks/{id}/complete` | Complete a task and set `completed_at` |
 | `POST` | `/tasks/{id}/cancel` | Cancel a task |
+| `POST` | `/leads/{id}/intelligence` | Generate or regenerate structured sales intelligence |
+| `GET` | `/leads/{id}/intelligence` | Retrieve the latest stored intelligence |
+
+## AI Sales Intelligence
+
+Intelligence is derived only from known data: Lead profile, score, qualification status, pipeline stage, recent activities, and pending tasks. It does not invent competitors, timelines, or purchasing commitments.
+
+The local provider considers signals such as budget, company size, AI/automation requirements, qualification score, pipeline position, overdue tasks, requirement detail, and recorded sales activity. Recommendations include an explicit reason and priority so they remain advisory and reviewable.
+
+Example response excerpt:
+
+```json
+{
+  "qualification_summary": "Hot B2B lead for OrbitFlow SaaS with a score of 90/100...",
+  "buying_signals": [
+    {"signal": "High budget", "evidence": "Stated budget is $9,000."}
+  ],
+  "risks": [],
+  "next_best_action": {
+    "action": "Schedule discovery call",
+    "reason": "The lead is Qualified with a score of 90/100.",
+    "priority": "high"
+  },
+  "follow_up": {
+    "subject": "Next steps for OrbitFlow SaaS",
+    "message": "Hi Michael, ..."
+  },
+  "provider": "local"
+}
+```
+
+Generate and retrieve intelligence:
+
+```bash
+curl -X POST http://localhost:8000/leads/1/intelligence
+curl http://localhost:8000/leads/1/intelligence
+```
+
+Regeneration updates the existing intelligence record. Only the first generation adds a timeline activity, avoiding repeated activity noise.
 
 ## Demo data
 
@@ -151,8 +226,8 @@ The command is idempotent. Run `python -m app.seed --reset` to replace only the 
 
 - **Phase 1 — complete:** backend foundation, scoring, CRUD, PostgreSQL, migrations, tests, Docker, documentation
 - **Phase 2 — complete:** sales pipeline, activity timeline, follow-up tasks, lead detail API, and demo dataset
-- **Phase 3:** authentication and roles, ownership, CSV/webhook ingestion, audit controls, and analytics foundations
-- **Phase 4:** AI qualification summaries, next-best actions, personalized follow-ups, and integrations
-- **Phase 5:** professional dashboard, deployment, and portfolio demo assets
+- **Phase 3 — complete:** provider-based AI sales intelligence, explainable recommendations, follow-up generation, persistence, and fallback handling
+- **Phase 4:** professional dashboard for leads, pipeline, tasks, timelines, and intelligence
+- **Phase 5:** authentication, ownership, workspaces, ingestion, audit controls, and deployment
 
-No paid API is required for Phase 1 or Phase 2.
+No paid API is required for the complete Phase 1–3 demo.

@@ -9,6 +9,7 @@ from app.db.base import Base
 
 if TYPE_CHECKING:
     from app.models.activity import Activity
+    from app.models.intelligence import LeadIntelligence
     from app.models.task import SalesTask
 
 
@@ -48,4 +49,10 @@ class Lead(Base):
     )
     tasks: Mapped[list["SalesTask"]] = relationship(
         back_populates="lead", cascade="all, delete-orphan", passive_deletes=True
+    )
+    intelligence: Mapped["LeadIntelligence | None"] = relationship(
+        back_populates="lead",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
+        uselist=False,
     )

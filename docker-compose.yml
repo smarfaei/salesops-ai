@@ -24,6 +24,11 @@ services:
       DATABASE_URL: ${DATABASE_URL:?Set DATABASE_URL in .env}
       APP_ENV: ${APP_ENV:-development}
       DEBUG: ${DEBUG:-false}
+      AI_PROVIDER: ${AI_PROVIDER:-local}
+      AI_ALLOW_FALLBACK: ${AI_ALLOW_FALLBACK:-true}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-}
+      OPENAI_TIMEOUT_SECONDS: ${OPENAI_TIMEOUT_SECONDS:-20}
     ports:
       - "${API_PORT:-8001}:8000"
     depends_on:
