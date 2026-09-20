@@ -2,6 +2,10 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from app.core.enums import PipelineStage
+from app.schemas.activity import ActivityResponse
+from app.schemas.task import TaskResponse
+
 
 class LeadBase(BaseModel):
     name: str = Field(min_length=1, max_length=100)
@@ -53,6 +57,7 @@ class LeadResponse(LeadBase):
     score: int = Field(ge=0, le=100)
     status: str
     score_reasons: list[str]
+    pipeline_stage: PipelineStage
     created_at: datetime
     updated_at: datetime
 
@@ -65,6 +70,16 @@ class LeadListResponse(BaseModel):
     page: int
     page_size: int
     pages: int
+
+
+class LeadStageUpdate(BaseModel):
+    stage: PipelineStage
+
+
+class LeadDetailResponse(BaseModel):
+    lead: LeadResponse
+    recent_activities: list[ActivityResponse]
+    upcoming_tasks: list[TaskResponse]
 
 
 class HealthResponse(BaseModel):

@@ -1,7 +1,9 @@
 from fastapi import FastAPI
 
+from app.api.activity_routes import router as activity_router
 from app.api.errors import install_exception_handlers
-from app.api.routes import router
+from app.api.routes import router as lead_router
+from app.api.task_routes import router as task_router
 from app.core.config import settings
 from app.core.logging import configure_logging
 
@@ -14,4 +16,6 @@ app = FastAPI(
     debug=settings.debug,
 )
 install_exception_handlers(app)
-app.include_router(router)
+app.include_router(lead_router)
+app.include_router(activity_router)
+app.include_router(task_router)
