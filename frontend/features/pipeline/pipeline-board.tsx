@@ -9,6 +9,7 @@ import { useApi } from "@/hooks/use-api";
 import { StatusBadge } from "@/components/lead-badges";
 import { Select } from "@/components/ui/form-controls";
 import { ErrorState, LoadingState } from "@/components/ui/state";
+import { useAuth } from "@/components/auth-provider";
 const stageAccent: Record<PipelineStage, string> = {
   New: "border-t-slate-400",
   Qualified: "border-t-blue-500",
@@ -18,6 +19,7 @@ const stageAccent: Record<PipelineStage, string> = {
   Lost: "border-t-stone-400",
 };
 export function PipelineBoard() {
+  const { can } = useAuth();
   const loader = useCallback(
     () => api.leads({ page_size: 100, sort_by: "score", sort_order: "desc" }),
     [],
@@ -108,7 +110,7 @@ export function PipelineBoard() {
                         aria-label={`Move ${lead.name}`}
                         className="mt-4 w-full text-xs"
                         value={lead.pipeline_stage}
-                        disabled={moving === lead.id}
+                        disabled={moving === lead.id || !can("pipeline:write")}
                         onChange={(e) =>
                           void move(lead.id, e.target.value as PipelineStage)
                         }

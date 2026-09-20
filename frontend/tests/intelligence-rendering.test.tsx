@@ -2,6 +2,11 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { api } from "@/lib/api";
 import { IntelligencePanel } from "@/features/intelligence/intelligence-panel";
+
+vi.mock("@/components/auth-provider", () => ({
+  useAuth: () => ({ can: () => true }),
+}));
+
 describe("Intelligence rendering", () => {
   it("labels AI advice and renders signals, action, and follow-up", async () => {
     vi.spyOn(api, "intelligence").mockResolvedValue({

@@ -1,15 +1,19 @@
 import argparse
 from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from app.ai.providers.local import LocalAIProvider
 from app.core.config import settings
-from app.core.enums import ActivityType, PipelineStage, TaskPriority, TaskStatus
+from app.core.enums import ActivityType, PipelineStage, TaskPriority, TaskStatus, UserRole
+from app.core.security import hash_password
 from app.db.session import SessionLocal
 from app.models.lead import Lead
+from app.models.audit import AuditLog
+from app.models.refresh_token import RefreshToken
 from app.models.task import SalesTask
+from app.models.user import User
 from app.services.activity import create_activity
 from app.services.scoring import score_lead
 from app.services.intelligence import SalesIntelligenceService
@@ -75,6 +79,13 @@ DEMO_LEADS = [
         "activity": (ActivityType.NOTE, "Project deferred until the next budget cycle"),
         "task": ("Revisit next quarter", 60, TaskPriority.LOW, TaskStatus.CANCELLED),
     },
+]
+
+DEMO_USERS = [
+    ("admin@salesops.demo", "Avery Admin", UserRole.ADMIN),
+    ("manager@salesops.demo", "Morgan Manager", UserRole.SALES_MANAGER),
+    ("rep@salesops.demo", "Riley Representative", UserRole.SALES_REP),
+    ("viewer@salesops.demo", "Valerie Viewer", UserRole.VIEWER),
 ]
 
 
@@ -162,27 +173,82 @@ def seed_demo_intelligence(db: Session) -> int:
     return lead.id
 
 
+def seed_demo_users(
+    db: Session, *, demo_mode: bool, password: str, reset: bool = False
+) -> dict[str, int]:
+    if not demo_mode:
+        raise RuntimeError("Demo account seeding requires DEMO_MODE=true")
+    if reset:
+        db.execute(delete(AuditLog))
+        db.execute(delete(RefreshToken))
+        db.execute(delete(User))
+        db.flush()
+    created = 0
+    users: dict[str, User] = {}
+    for email, full_name, role in DEMO_USERS:
+        user = db.scalar(select(User).where(User.email == email))
+        if user is None:
+            user = User(email=email, full_name=full_name, role=role, is_active=True)
+            db.add(user)
+            created += 1
+        user.full_name = full_name
+        user.role = role
+        user.is_active = True
+        user.hashed_password = hash_password(password)
+        users[email] = user
+    db.flush()
+    rep = users["rep@salesops.demo"]
+    for lead in db.scalars(select(Lead)).all():
+        lead.owner_user_id = rep.id
+    db.commit()
+    return {"created": created, "existing": len(DEMO_USERS) - created}
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Seed realistic SalesOps AI demo data")
     parser.add_argument(
         "--reset",
         action="store_true",
-        help="Replace only the six known demo companies; other records are preserved",
+        help="Replace the dedicated demo database with its canonical fictional dataset",
     )
     parser.add_argument(
         "--with-intelligence",
         action="store_true",
         help="Generate deterministic local intelligence for OrbitFlow SaaS",
     )
+    parser.add_argument(
+        "--with-users",
+        action="store_true",
+        help="Create demo RBAC accounts and assign demo leads",
+    )
     args = parser.parse_args()
     if args.reset and not settings.demo_mode:
         parser.error("--reset requires DEMO_MODE=true")
+    if args.with_users and not settings.demo_mode:
+        parser.error("--with-users requires DEMO_MODE=true")
+    if args.with_users and settings.demo_account_password is None:
+        parser.error("--with-users requires DEMO_ACCOUNT_PASSWORD")
     with SessionLocal() as db:
         result = seed_demo_data(db, reset=args.reset, demo_mode=settings.demo_mode)
         intelligence_lead_id = seed_demo_intelligence(db) if args.with_intelligence else None
+        user_result = (
+            seed_demo_users(
+                db,
+                demo_mode=settings.demo_mode,
+                password=settings.demo_account_password.get_secret_value(),
+                reset=args.reset,
+            )
+            if args.with_users and settings.demo_account_password
+            else None
+        )
     print(f"Demo data ready: {result['created']} created, {result['existing']} already existed")
     if intelligence_lead_id is not None:
         print(f"Local intelligence ready for lead id={intelligence_lead_id}")
+    if user_result is not None:
+        print(
+            f"Demo users ready: {user_result['created']} created, "
+            f"{user_result['existing']} already existed"
+        )
 
 
 if __name__ == "__main__":

@@ -53,4 +53,26 @@ describe("API client", () => {
       status: 403,
     });
   });
+
+  it("retries an unauthorized request through the refresh cookie and fails safely", async () => {
+    const mock = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ detail: "Authentication required" }), {
+          status: 401,
+          headers: { "Content-Type": "application/json" },
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ detail: "Invalid refresh session" }), {
+          status: 401,
+          headers: { "Content-Type": "application/json" },
+        }),
+      );
+
+    await expect(api.dashboard()).rejects.toMatchObject({ status: 401 });
+    expect(mock).toHaveBeenCalledTimes(2);
+    expect(mock.mock.calls[1][0]).toContain("/auth/refresh");
+    expect(mock.mock.calls[1][1]).toMatchObject({ credentials: "include" });
+  });
 });

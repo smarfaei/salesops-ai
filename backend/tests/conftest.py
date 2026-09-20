@@ -8,6 +8,7 @@ os.environ["APP_ENV"] = "test"
 os.environ["DEBUG"] = "false"
 os.environ["DEMO_MODE"] = "false"
 os.environ["CORS_ORIGINS"] = "http://localhost:3000"
+os.environ["JWT_SECRET"] = "test-only-jwt-secret-at-least-32-characters"
 
 BACKEND_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(BACKEND_DIR))
@@ -20,7 +21,11 @@ from sqlalchemy.pool import StaticPool
 
 from app.db.base import Base
 from app.db.session import get_db
+from app.core.authz import get_current_user
+from app.core.enums import UserRole
+from app.core.security import hash_password
 from app.main import app
+from app.models.user import User
 
 engine = create_engine(
     "sqlite+pysqlite:///:memory:",
@@ -54,11 +59,27 @@ def db_session() -> Generator[Session, None, None]:
 
 
 @pytest.fixture
-def client(db_session: Session) -> Generator[TestClient, None, None]:
+def admin_user(db_session: Session) -> User:
+    user = User(
+        email="admin@test.example",
+        full_name="Test Admin",
+        hashed_password=hash_password("TestPassword!123"),
+        role=UserRole.ADMIN,
+        is_active=True,
+    )
+    db_session.add(user)
+    db_session.commit()
+    db_session.refresh(user)
+    return user
+
+
+@pytest.fixture
+def client(db_session: Session, admin_user: User) -> Generator[TestClient, None, None]:
     def override_get_db() -> Generator[Session, None, None]:
         yield db_session
 
     app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_current_user] = lambda: admin_user
     with TestClient(app, raise_server_exceptions=True) as test_client:
         yield test_client
     app.dependency_overrides.clear()

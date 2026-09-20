@@ -1,10 +1,10 @@
 "use client";
 import Link from "next/link";
 import { Building2, Calendar, Edit3, Users } from "lucide-react";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { formatCurrency, formatDate, stages } from "@/lib/utils";
-import type { PipelineStage } from "@/types";
+import type { PipelineStage, User } from "@/types";
 import { useApi } from "@/hooks/use-api";
 import { StatusBadge, StageBadge } from "@/components/lead-badges";
 import { Button } from "@/components/ui/button";
@@ -15,12 +15,22 @@ import { IntelligencePanel } from "@/features/intelligence/intelligence-panel";
 import { ActivityTimeline } from "@/features/activities/activity-timeline";
 import { TaskCenter } from "@/features/tasks/task-center";
 import { DEMO_MODE } from "@/lib/config";
+import { useAuth } from "@/components/auth-provider";
 export function LeadDetail({ leadId }: { leadId: number }) {
+  const { can } = useAuth();
   const loader = useCallback(() => api.lead(leadId), [leadId]);
   const { data: lead, loading, error, reload } = useApi(loader);
   const [updating, setUpdating] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [owners, setOwners] = useState<User[]>([]);
+  useEffect(() => {
+    if (can("lead:assign"))
+      void api
+        .assignableUsers()
+        .then(setOwners)
+        .catch(() => setOwners([]));
+  }, [can]);
   const changeStage = async (stage: PipelineStage) => {
     if (!lead || stage === lead.pipeline_stage) return;
     setUpdating(true);
@@ -31,6 +41,19 @@ export function LeadDetail({ leadId }: { leadId: number }) {
       setRefreshKey((x) => x + 1);
     } catch (e) {
       setActionError(e instanceof Error ? e.message : "Unable to update stage");
+    } finally {
+      setUpdating(false);
+    }
+  };
+  const changeOwner = async (ownerUserId: string) => {
+    if (!lead) return;
+    setUpdating(true);
+    setActionError(null);
+    try {
+      await api.assignLead(lead.id, ownerUserId ? Number(ownerUserId) : null);
+      await reload();
+    } catch (e) {
+      setActionError(e instanceof Error ? e.message : "Unable to assign lead");
     } finally {
       setUpdating(false);
     }
@@ -56,14 +79,14 @@ export function LeadDetail({ leadId }: { leadId: number }) {
           <Select
             aria-label="Pipeline stage"
             value={lead.pipeline_stage}
-            disabled={updating}
+            disabled={updating || !can("pipeline:write")}
             onChange={(e) => void changeStage(e.target.value as PipelineStage)}
           >
             {stages.map((x) => (
               <option key={x}>{x}</option>
             ))}
           </Select>
-          {!DEMO_MODE && (
+          {!DEMO_MODE && can("lead:edit") && (
             <Link href={`/leads/${lead.id}/edit`}>
               <Button variant="outline">
                 <Edit3 className="size-4" />
@@ -103,6 +126,31 @@ export function LeadDetail({ leadId }: { leadId: number }) {
                   value={`${lead.employees.toLocaleString()} people`}
                 />
                 <Metric label="Stage" value={lead.pipeline_stage} />
+              </div>
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wide text-slate-500">
+                  Owner
+                </p>
+                {can("lead:assign") ? (
+                  <Select
+                    className="mt-2 w-full"
+                    aria-label="Lead owner"
+                    value={lead.owner_user_id ?? ""}
+                    disabled={updating}
+                    onChange={(event) => void changeOwner(event.target.value)}
+                  >
+                    <option value="">Unassigned</option>
+                    {owners.map((owner) => (
+                      <option key={owner.id} value={owner.id}>
+                        {owner.full_name}
+                      </option>
+                    ))}
+                  </Select>
+                ) : (
+                  <p className="mt-2 text-sm font-medium text-slate-800">
+                    {lead.owner?.full_name ?? "Unassigned"}
+                  </p>
+                )}
               </div>
               <div>
                 <p className="text-xs font-bold uppercase tracking-wide text-slate-500">

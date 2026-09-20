@@ -37,6 +37,9 @@ SalesOps AI stores and scores every lead with a transparent ruleset, classifies 
 - Responsive executive dashboard with live KPIs and Recharts visualizations
 - Lead table, CRM record, pipeline board, task center, and analytics screens
 - Professional loading, empty, error, validation, and action states
+- Short-lived JWT authentication with rotating, revocable refresh sessions
+- Centralized role-based permissions for Admin, Manager, Sales Rep, and Viewer
+- Lead ownership controls and a security-relevant audit trail
 
 ## Demo Workflow
 
@@ -44,7 +47,7 @@ Reset the six fictional B2B scenarios, their activities and tasks, and the Orbit
 
 ```bash
 cd backend
-python -m app.seed --reset --with-intelligence
+python -m app.seed --reset --with-intelligence --with-users
 ```
 
 The reset command is accepted only when `DEMO_MODE=true`. It clears the dedicated demo database and recreates only the six fictional scenarios; it never runs automatically at application startup. Keep `DEMO_MODE=false` for ordinary local development. For the portfolio walkthrough:
@@ -55,11 +58,24 @@ The reset command is accepted only when `DEMO_MODE=true`. It clears the dedicate
 4. Copy the personalized follow-up and manage a follow-up task.
 5. Move a lead on the Pipeline and confirm the timeline and Dashboard update.
 
+When `--with-users` is supplied, the guarded demo seed creates four fictional accounts:
+
+| Demo role            | Email                   |
+| -------------------- | ----------------------- |
+| Administrator        | `admin@salesops.demo`   |
+| Sales Manager        | `manager@salesops.demo` |
+| Sales Representative | `rep@salesops.demo`     |
+| Viewer               | `viewer@salesops.demo`  |
+
+Set `DEMO_ACCOUNT_PASSWORD` to an intentionally public, demo-only password before seeding and publish that password with the deployment. It is never stored in this repository, never becomes a production default, and demo-account seeding refuses to run when `DEMO_MODE=false`.
+
 ## Architecture
 
 ```mermaid
 flowchart TD
-    UI[Next.js Frontend] --> API[FastAPI API]
+    UI[Next.js Frontend] --> AUTH[JWT + Refresh Session]
+    AUTH --> RBAC[Central RBAC + Ownership]
+    RBAC --> API[FastAPI API]
     API --> SERVICES[Service Layer]
     SERVICES --> SCORE[Lead Scoring]
     SERVICES --> WORKFLOW[Sales Workflow]
@@ -73,6 +89,35 @@ flowchart TD
 ```
 
 The HTTP layer validates input and coordinates requests. Business rules live in focused service modules. SQLAlchemy models define `Lead → Activities`, `Lead → Tasks`, and `Lead → Latest Intelligence` relationships with database-enforced cascading. Pydantic schemas define every public API and provider response. Tables are created only through Alembic migrations.
+
+### Authentication architecture
+
+Passwords are stored as salted `scrypt` hashes. A successful login returns a 15-minute HMAC-SHA256 access JWT that the frontend keeps only in memory. The independent opaque refresh token is stored as a SHA-256 hash in PostgreSQL and sent only through a scoped `HttpOnly` cookie. Refresh rotates and revokes the previous token; logout revokes the current token and clears the cookie. Cookie `Secure` and `SameSite` behavior, token lifetimes, and the signing secret are environment-controlled. No token or password is written to application logs.
+
+The browser restores a session through `/auth/refresh` before rendering protected content. It does not place access or refresh credentials in `localStorage`.
+
+### RBAC and ownership
+
+Backend dependencies enforce permissions centrally; frontend controls are convenience only.
+
+| Capability                                     | Admin | Sales Manager |   Sales Rep    | Viewer |
+| ---------------------------------------------- | :---: | :-----------: | :------------: | :----: |
+| Read sales data and intelligence               |   ✓   |       ✓       | Assigned leads |   ✓    |
+| Create leads                                   |   ✓   |       ✓       |       —        |   —    |
+| Edit pipeline, activities, tasks, intelligence |   ✓   |       ✓       | Assigned leads |   —    |
+| Assign lead owners                             |   ✓   |       ✓       |       —        |   —    |
+| Manage users                                   |   ✓   |       —       |       —        |   —    |
+| Read audit logs                                |   ✓   |       ✓       |       —        |   —    |
+
+Existing leads migrate with a nullable owner, preserving data. Admins and Managers can assign active Sales Representatives; a Sales Rep can read and mutate only leads assigned to that user. The audit log records successful login and meaningful sales/admin mutations while recursively removing sensitive metadata keys.
+
+Authorization is evaluated in this order for the public portfolio environment:
+
+```text
+DEMO_MODE safety restrictions → Authentication → RBAC → Lead ownership
+```
+
+Consequently, even a demo Administrator cannot bypass destructive public-demo protections.
 
 ### AI provider flow
 
@@ -117,6 +162,8 @@ pip install -r requirements-dev.txt
 ```
 
 Create `.env` from `.env.example`. When running the API outside Docker, change the database hostname in `DATABASE_URL` from `db` to `localhost`.
+
+Generate `JWT_SECRET` with at least 32 random characters. In production use HTTPS, `AUTH_COOKIE_SECURE=true`, an exact HTTPS `CORS_ORIGINS` allowlist, and an appropriate `AUTH_COOKIE_SAMESITE` value. Never reuse the documented demo password for any non-demo account.
 
 ### AI configuration
 
@@ -198,6 +245,14 @@ Compose applies all pending migrations before starting the API. Existing leads a
 | `POST`             | `/tasks/{id}/cancel`       | Cancel a task                                        |
 | `POST`             | `/leads/{id}/intelligence` | Generate or regenerate structured sales intelligence |
 | `GET`              | `/leads/{id}/intelligence` | Retrieve the latest stored intelligence              |
+| `POST`             | `/auth/login`              | Authenticate and start a refresh session             |
+| `POST`             | `/auth/refresh`            | Rotate refresh session and issue an access token     |
+| `POST`             | `/auth/logout`             | Revoke and clear the current refresh session         |
+| `GET`              | `/auth/me`                 | Return the authenticated user                        |
+| `GET/POST`         | `/users`                   | Admin-only user listing and creation                 |
+| `PATCH`            | `/users/{id}`              | Admin-only profile, role, and status update          |
+| `PATCH`            | `/leads/{id}/owner`        | Admin/Manager lead assignment                        |
+| `GET`              | `/audit-logs`              | Paginated Admin/Manager audit history                |
 
 ## Testing
 
@@ -217,7 +272,7 @@ npm test
 npm run build
 ```
 
-The suites cover scoring, CRUD, pipeline transitions and history, dashboard aggregates, activities, task lifecycle, intelligence, demo data, API client behavior, UI mappings, and critical lead/intelligence rendering.
+The suites cover scoring, CRUD, pipeline transitions and history, dashboard aggregates, activities, task lifecycle, intelligence, authentication, refresh rotation/revocation, all four roles, ownership, audit logs, demo/RBAC precedence, login limiting, protected routes, current-user state, API errors, and critical rendering.
 
 ## AI Provider Architecture
 
@@ -276,6 +331,7 @@ See [the detailed capture checklist](docs/SCREENSHOTS.md), [the case study](docs
 - **Phase 3 — complete:** provider-based AI sales intelligence, explainable recommendations, follow-up generation, persistence, and fallback handling
 - **Phase 4 — complete:** professional full-stack dashboard for leads, pipeline, tasks, timelines, analytics, and intelligence
 - **Phase 5 — complete:** portfolio polish, CI, deployment documentation, and repeatable demo preparation
-- **Future:** authentication, ownership, workspaces, RBAC, audit controls, and production observability
+- **Phase 6 — complete:** secure authentication, centralized RBAC, lead ownership, audit controls, and role-focused demo accounts
+- **Future:** multi-tenancy/workspaces, password recovery, email verification, and production observability
 
 No paid API is required for the complete portfolio demo. No customer results or performance claims are implied.

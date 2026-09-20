@@ -9,6 +9,7 @@ Inbound B2B leads commonly arrive through disconnected channels. Sales teams nee
 - Sales representatives managing daily follow-ups
 - Sales managers reviewing qualification and pipeline health
 - Small B2B teams that need lightweight sales operations automation
+- Administrators controlling access and Managers assigning opportunities
 
 ## Business Workflow
 
@@ -23,7 +24,15 @@ SalesOps AI is a responsive CRM-style application built around a single lead rec
 
 ## Architecture
 
-The Next.js frontend calls a typed, centralized FastAPI client. FastAPI validates requests and delegates work to focused scoring, workflow, task, activity, and intelligence services. SQLAlchemy persists records in PostgreSQL, while Alembic manages schema evolution. Docker Compose provides a repeatable local stack.
+The Next.js frontend calls a typed, centralized FastAPI client. FastAPI authenticates each request, applies centralized role and ownership policies, then delegates work to focused scoring, workflow, task, activity, and intelligence services. SQLAlchemy persists records, hashed refresh sessions, and audit events in PostgreSQL, while Alembic manages schema evolution. Docker Compose provides a repeatable local stack.
+
+## Authentication, RBAC, and Ownership
+
+The application uses short-lived access JWTs held in browser memory and rotating opaque refresh tokens delivered through a scoped `HttpOnly` cookie. Only hashes of refresh tokens and salted `scrypt` password hashes are stored. Protected content waits for session restoration, avoiding a flash of private UI.
+
+An explicit permission map defines Admin, Sales Manager, Sales Rep, and Viewer capabilities. Admins manage users; Managers assign leads and inspect audit events; Sales Reps work only on assigned leads; Viewers receive a read-only sales view. Backend policy is authoritative even when client-side controls are manipulated.
+
+Meaningful actions produce audit records with actor, event, entity, timestamp, and sanitized metadata. Passwords, tokens, API keys, and authorization headers are excluded.
 
 ## Lead Scoring
 
@@ -56,11 +65,11 @@ The dashboard reads backend aggregates for lead qualification, stage distributio
 - Latest intelligence is persisted for fast display and explicit regeneration.
 - A centralized API client prevents scattered request logic.
 - Lightweight React hooks are sufficient; a global state library is unnecessary.
-- Authentication and multi-tenancy are intentionally deferred to avoid premature complexity.
+- Authentication remains single-workspace by design; tenant isolation is deferred until a multi-tenant product phase.
 
 ## Testing
 
-Pytest covers backend scoring, CRUD, workflow, dashboard aggregates, demo data, and intelligence. Vitest and Testing Library cover API behavior, UI mappings, and critical Lead and Intelligence rendering. CI runs lint, strict typechecking, tests, and a production build.
+Pytest covers backend scoring, CRUD, workflow, dashboard aggregates, demo data, intelligence, authentication, token lifecycle, RBAC, ownership, audit events, and demo-mode precedence. Vitest and Testing Library cover API behavior, session state, protected routes, role-aware UI, and critical Lead and Intelligence rendering. CI runs lint, strict typechecking, tests, and a production build.
 
 ## Business Value
 
@@ -68,7 +77,7 @@ The project demonstrates how a sales team could make qualification consistent, k
 
 ## Limitations
 
-- No authentication, ownership, or tenant isolation
+- No tenant isolation, registration, password recovery, or email verification
 - No email sending or external CRM synchronization
 - No background job queue or production observability stack
 - Scoring weights are code-defined rather than user-configurable
@@ -76,4 +85,4 @@ The project demonstrates how a sales team could make qualification consistent, k
 
 ## Future Improvements
 
-Add authentication and workspaces, role-based access, audit controls, configurable scoring, ingestion webhooks, email/CRM integrations, background jobs, and production monitoring after the single-workspace workflow is validated.
+Add workspaces and tenant isolation, password recovery, configurable scoring, ingestion webhooks, email/CRM integrations, background jobs, distributed rate limiting, and production monitoring after the single-workspace workflow is validated.

@@ -12,6 +12,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input, Label, Select, Textarea } from "@/components/ui/form-controls";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/state";
 import { DEMO_MODE } from "@/lib/config";
+import { useAuth } from "@/components/auth-provider";
 type View = "pending" | "upcoming" | "overdue" | "completed" | "cancelled";
 export function TaskCenter({
   leadId,
@@ -20,6 +21,7 @@ export function TaskCenter({
   leadId?: number;
   compact?: boolean;
 }) {
+  const { can } = useAuth();
   const [view, setView] = useState<View>("pending");
   const loader = useCallback(
     () =>
@@ -81,7 +83,7 @@ export function TaskCenter({
             Follow-ups that keep the pipeline moving
           </p>
         </div>
-        {leadId && (
+        {leadId && can("task:write") && (
           <Button size="sm" onClick={beginCreate}>
             <Plus className="size-4" />
             Create task
@@ -185,7 +187,7 @@ export function TaskCenter({
                   </p>
                 </div>
                 <div className="flex gap-1">
-                  {task.status === "pending" && (
+                  {task.status === "pending" && can("task:write") && (
                     <>
                       <Button
                         aria-label="Complete task"
@@ -216,7 +218,7 @@ export function TaskCenter({
                       </Button>
                     </>
                   )}
-                  {!DEMO_MODE && (
+                  {!DEMO_MODE && can("task:write") && (
                     <Button
                       aria-label="Delete task"
                       title="Delete"

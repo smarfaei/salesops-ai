@@ -7,8 +7,9 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Response, status
 from sqlalchemy import asc, desc, func, or_, select, text
 from sqlalchemy.orm import Session
 
+from app.core.authz import Permission, authorize_lead_access, require_permissions
 from app.core.demo import block_in_demo_mode
-from app.core.enums import ActivityType, PipelineStage, TaskStatus
+from app.core.enums import ActivityType, AuditEventType, PipelineStage, TaskStatus, UserRole
 from app.db.session import get_db
 from app.models.activity import Activity
 from app.models.lead import Lead
@@ -20,6 +21,7 @@ from app.schemas.lead import (
     LeadDetailResponse,
     LeadListResponse,
     LeadResponse,
+    LeadOwnerUpdate,
     LeadStageUpdate,
     LeadUpdate,
 )
@@ -27,6 +29,8 @@ from app.schemas.task import TaskResponse
 from app.services.activity import create_activity
 from app.services.pipeline import transition_stage
 from app.services.scoring import score_lead
+from app.models.user import User
+from app.services.audit import record_audit
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -70,8 +74,11 @@ def get_all_leads(
     sort_by: SortField = SortField.created_at,
     sort_order: SortOrder = SortOrder.desc,
     db: Session = Depends(get_db),
+    current_user: User = Depends(require_permissions(Permission.LEAD_READ)),
 ) -> LeadListResponse:
     filters = []
+    if current_user.role == UserRole.SALES_REP:
+        filters.append(Lead.owner_user_id == current_user.id)
     if search:
         pattern = f"%{search.strip()}%"
         filters.append(or_(Lead.name.ilike(pattern), Lead.company.ilike(pattern), Lead.need.ilike(pattern)))
@@ -114,6 +121,7 @@ def create_lead(
     payload: LeadCreate,
     db: Session = Depends(get_db),
     _demo_guard: None = Depends(block_in_demo_mode),
+    current_user: User = Depends(require_permissions(Permission.LEAD_CREATE)),
 ) -> LeadResponse:
     result = score_lead(payload.budget, payload.employees, payload.need)
     lead = Lead(**payload.model_dump(), score=result.score, status=result.status, score_reasons=result.reasons)
@@ -126,6 +134,13 @@ def create_lead(
         description=f"Lead created for {lead.name} at {lead.company}",
         metadata={"score": lead.score, "status": lead.status},
     )
+    record_audit(
+        db,
+        actor_user_id=current_user.id,
+        event_type=AuditEventType.LEAD_CREATED,
+        entity_type="lead",
+        entity_id=lead.id,
+    )
     db.commit()
     db.refresh(lead)
     logger.info("Created lead id=%s status=%s score=%s", lead.id, lead.status, lead.score)
@@ -133,18 +148,28 @@ def create_lead(
 
 
 @router.get("/leads/{lead_id}", response_model=LeadResponse, tags=["leads"])
-def get_lead(lead_id: int, db: Session = Depends(get_db)) -> LeadResponse:
+def get_lead(
+    lead_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permissions(Permission.LEAD_READ)),
+) -> LeadResponse:
     lead = db.get(Lead, lead_id)
     if lead is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Lead not found")
+    authorize_lead_access(current_user, lead)
     return _response(lead)
 
 
 @router.get("/leads/{lead_id}/detail", response_model=LeadDetailResponse, tags=["leads"])
-def get_lead_detail(lead_id: int, db: Session = Depends(get_db)) -> LeadDetailResponse:
+def get_lead_detail(
+    lead_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permissions(Permission.LEAD_READ)),
+) -> LeadDetailResponse:
     lead = db.get(Lead, lead_id)
     if lead is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Lead not found")
+    authorize_lead_access(current_user, lead)
     recent_activities = list(
         db.scalars(
             select(Activity)
@@ -175,13 +200,26 @@ def get_lead_detail(lead_id: int, db: Session = Depends(get_db)) -> LeadDetailRe
 
 @router.patch("/leads/{lead_id}/stage", response_model=LeadResponse, tags=["pipeline"])
 def change_lead_stage(
-    lead_id: int, payload: LeadStageUpdate, db: Session = Depends(get_db)
+    lead_id: int,
+    payload: LeadStageUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permissions(Permission.PIPELINE_WRITE)),
 ) -> LeadResponse:
     lead = db.get(Lead, lead_id)
     if lead is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Lead not found")
+    authorize_lead_access(current_user, lead, write=True)
+    previous = lead.pipeline_stage
     if not transition_stage(db, lead, payload.stage):
         raise HTTPException(status.HTTP_409_CONFLICT, "Lead is already in this stage")
+    record_audit(
+        db,
+        actor_user_id=current_user.id,
+        event_type=AuditEventType.PIPELINE_CHANGED,
+        entity_type="lead",
+        entity_id=lead.id,
+        metadata={"from": previous.value, "to": payload.stage.value},
+    )
     db.commit()
     db.refresh(lead)
     logger.info("Changed lead id=%s stage=%s", lead.id, lead.pipeline_stage.value)
@@ -194,10 +232,12 @@ def update_lead(
     payload: LeadUpdate,
     db: Session = Depends(get_db),
     _demo_guard: None = Depends(block_in_demo_mode),
+    current_user: User = Depends(require_permissions(Permission.LEAD_EDIT)),
 ) -> LeadResponse:
     lead = db.get(Lead, lead_id)
     if lead is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Lead not found")
+    authorize_lead_access(current_user, lead, write=True)
 
     updates = payload.model_dump(exclude_unset=True)
     if not updates:
@@ -221,6 +261,14 @@ def update_lead(
             description=f"Lead updated: {', '.join(changes)}",
             metadata={"changes": changes},
         )
+        record_audit(
+            db,
+            actor_user_id=current_user.id,
+            event_type=AuditEventType.LEAD_UPDATED,
+            entity_type="lead",
+            entity_id=lead.id,
+            metadata={"fields": list(changes)},
+        )
     db.commit()
     db.refresh(lead)
     logger.info("Updated lead id=%s status=%s score=%s", lead.id, lead.status, lead.score)
@@ -232,11 +280,51 @@ def delete_lead(
     lead_id: int,
     db: Session = Depends(get_db),
     _demo_guard: None = Depends(block_in_demo_mode),
+    current_user: User = Depends(require_permissions(Permission.LEAD_DELETE)),
 ) -> Response:
     lead = db.get(Lead, lead_id)
     if lead is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Lead not found")
+    authorize_lead_access(current_user, lead, write=True)
+    record_audit(
+        db,
+        actor_user_id=current_user.id,
+        event_type=AuditEventType.LEAD_DELETED,
+        entity_type="lead",
+        entity_id=lead.id,
+        metadata={"company": lead.company},
+    )
     db.delete(lead)
     db.commit()
     logger.info("Deleted lead id=%s", lead_id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.patch("/leads/{lead_id}/owner", response_model=LeadResponse, tags=["leads"])
+def assign_lead_owner(
+    lead_id: int,
+    payload: LeadOwnerUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permissions(Permission.LEAD_ASSIGN)),
+) -> LeadResponse:
+    lead = db.get(Lead, lead_id)
+    if lead is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Lead not found")
+    owner = db.get(User, payload.owner_user_id) if payload.owner_user_id is not None else None
+    if payload.owner_user_id is not None and (
+        owner is None or not owner.is_active or owner.role != UserRole.SALES_REP
+    ):
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, "Owner must be an active sales rep")
+    previous = lead.owner_user_id
+    lead.owner = owner
+    record_audit(
+        db,
+        actor_user_id=current_user.id,
+        event_type=AuditEventType.OWNER_CHANGED,
+        entity_type="lead",
+        entity_id=lead.id,
+        metadata={"from": previous, "to": payload.owner_user_id},
+    )
+    db.commit()
+    db.refresh(lead)
+    return _response(lead)

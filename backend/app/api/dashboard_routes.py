@@ -2,22 +2,31 @@ from fastapi import APIRouter, Depends
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.core.enums import PipelineStage, TaskStatus
+from app.core.authz import Permission, require_permissions
+from app.core.enums import PipelineStage, TaskStatus, UserRole
 from app.db.session import get_db
 from app.models.lead import Lead
 from app.models.task import SalesTask
+from app.models.user import User
 from app.schemas.dashboard import DashboardKpis, DashboardSummary, MetricItem
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
 
 @router.get("/summary", response_model=DashboardSummary)
-def dashboard_summary(db: Session = Depends(get_db)) -> DashboardSummary:
+def dashboard_summary(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permissions(Permission.ANALYTICS_READ)),
+) -> DashboardSummary:
     """Return read-only aggregates without duplicating scoring or workflow rules."""
+    lead_filter = [Lead.owner_user_id == current_user.id] if current_user.role == UserRole.SALES_REP else []
     leads = db.execute(
-        select(Lead.status, Lead.pipeline_stage, Lead.score, Lead.budget)
+        select(Lead.status, Lead.pipeline_stage, Lead.score, Lead.budget).where(*lead_filter)
     ).all()
-    task_statuses = list(db.scalars(select(SalesTask.status)).all())
+    task_query = select(SalesTask.status)
+    if current_user.role == UserRole.SALES_REP:
+        task_query = task_query.join(Lead).where(Lead.owner_user_id == current_user.id)
+    task_statuses = list(db.scalars(task_query).all())
 
     status_counts = {name: 0 for name in ("Hot", "Warm", "Cold")}
     stage_counts = {stage.value: 0 for stage in PipelineStage}

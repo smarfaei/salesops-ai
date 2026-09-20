@@ -11,6 +11,7 @@ from app.core.config import Settings
 from app.db.session import get_db
 from app.main import create_app
 from app.models.lead import Lead
+from app.models.user import User
 from app.seed import DEMO_LEADS, seed_demo_data
 
 
@@ -18,6 +19,7 @@ def demo_settings(*, rate_limit: int = 100) -> Settings:
     return Settings(
         DATABASE_URL="sqlite+pysqlite:///:memory:",
         CORS_ORIGINS="https://demo.example.com",
+        JWT_SECRET="test-only-jwt-secret-at-least-32-characters",
         DEMO_MODE=True,
         DEBUG=True,
         AI_PROVIDER="openai",
@@ -37,6 +39,19 @@ def demo_client(db_session: Session, *, rate_limit: int = 100) -> Generator[Test
         yield db_session
 
     app.dependency_overrides[get_db] = override_get_db
+    user = User(
+        email="demo-admin@test.example",
+        full_name="Demo Admin",
+        hashed_password="not-used",
+        role="admin",
+        is_active=True,
+    )
+    db_session.add(user)
+    db_session.commit()
+    db_session.refresh(user)
+    from app.core.authz import get_current_user
+
+    app.dependency_overrides[get_current_user] = lambda: user
     with TestClient(app) as client:
         yield client
 
@@ -55,6 +70,7 @@ def test_demo_settings_reject_wildcard_cors():
         Settings(
             DATABASE_URL="sqlite+pysqlite:///:memory:",
             CORS_ORIGINS="*",
+            JWT_SECRET="test-only-jwt-secret-at-least-32-characters",
             DEMO_MODE=True,
             _env_file=None,
         )

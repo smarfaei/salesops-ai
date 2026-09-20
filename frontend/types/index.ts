@@ -3,6 +3,7 @@ export type PipelineStage =
   "New" | "Qualified" | "Contacted" | "Proposal" | "Won" | "Lost";
 export type TaskStatus = "pending" | "completed" | "cancelled";
 export type TaskPriority = "low" | "medium" | "high";
+export type UserRole = "admin" | "sales_manager" | "sales_rep" | "viewer";
 export type ActivityType =
   | "lead_created"
   | "lead_updated"
@@ -23,8 +24,50 @@ export interface Lead {
   status: LeadStatus;
   score_reasons: string[];
   pipeline_stage: PipelineStage;
+  owner_user_id: number | null;
+  owner: User | null;
   created_at: string;
   updated_at: string;
+}
+export interface User {
+  id: number;
+  email: string;
+  full_name: string;
+  role: UserRole;
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
+  last_login_at?: string | null;
+}
+export interface AuthResponse {
+  access_token: string;
+  token_type: "bearer";
+  expires_in: number;
+  user: User;
+}
+export interface UserList {
+  items: User[];
+  total: number;
+  page: number;
+  page_size: number;
+  pages: number;
+}
+export interface AuditLog {
+  id: number;
+  actor_user_id: number | null;
+  event_type: string;
+  entity_type: string;
+  entity_id: string | null;
+  metadata: Record<string, unknown> | null;
+  created_at: string;
+  actor: User | null;
+}
+export interface AuditLogList {
+  items: AuditLog[];
+  total: number;
+  page: number;
+  page_size: number;
+  pages: number;
 }
 export interface LeadInput {
   name: string;

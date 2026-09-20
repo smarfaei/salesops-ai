@@ -6,12 +6,17 @@ import {
   BriefcaseBusiness,
   CheckSquare2,
   LayoutDashboard,
+  LogOut,
+  ScrollText,
   Search,
+  ShieldCheck,
   Sparkles,
   Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DEMO_MODE } from "@/lib/config";
+import { useAuth } from "@/components/auth-provider";
+import { roleLabel } from "@/lib/permissions";
 const nav = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
   { href: "/leads", label: "Leads", icon: Users },
@@ -21,6 +26,16 @@ const nav = [
 ];
 export function AppShell({ children }: { children: React.ReactNode }) {
   const path = usePathname();
+  const { user, logout, can } = useAuth();
+  const visibleNav = [
+    ...nav,
+    ...(can("user:manage")
+      ? [{ href: "/users", label: "Users", icon: ShieldCheck }]
+      : []),
+    ...(can("audit:read")
+      ? [{ href: "/audit", label: "Audit", icon: ScrollText }]
+      : []),
+  ];
   return (
     <div className="min-h-screen bg-slate-50">
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 border-r border-slate-200 bg-slate-950 lg:block">
@@ -36,7 +51,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
         <nav className="space-y-1 px-3">
-          {nav.map(({ href, label, icon: Icon }) => {
+          {visibleNav.map(({ href, label, icon: Icon }) => {
             const active = href === "/" ? path === href : path.startsWith(href);
             return (
               <Link
@@ -75,22 +90,35 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <div className="ml-auto flex items-center gap-3">
             <div className="hidden text-right sm:block">
               <p className="text-sm font-semibold text-slate-800">
-                Portfolio Demo
+                {user?.full_name}
               </p>
-              <p className="text-xs text-slate-500">Sales operations</p>
+              <p className="text-xs text-slate-500">
+                {user ? roleLabel[user.role] : "Sales operations"}
+              </p>
               {DEMO_MODE && (
                 <p className="text-[10px] font-semibold uppercase tracking-wide text-emerald-700">
                   Safe public demo
                 </p>
               )}
             </div>
-            <div className="flex size-9 items-center justify-center rounded-full bg-slate-900 text-xs font-bold text-white">
-              SO
-            </div>
+            <button
+              type="button"
+              onClick={() => void logout()}
+              title="Sign out"
+              aria-label="Sign out"
+              className="flex size-9 items-center justify-center rounded-full bg-slate-900 text-xs font-bold text-white hover:bg-slate-700"
+            >
+              <LogOut className="size-4" />
+            </button>
           </div>
         </header>
-        <nav className="grid grid-cols-5 border-b border-slate-200 bg-white px-1 py-2 lg:hidden">
-          {nav.map(({ href, label, icon: Icon }) => (
+        <nav
+          className="grid border-b border-slate-200 bg-white px-1 py-2 lg:hidden"
+          style={{
+            gridTemplateColumns: `repeat(${visibleNav.length}, minmax(0, 1fr))`,
+          }}
+        >
+          {visibleNav.map(({ href, label, icon: Icon }) => (
             <Link
               key={href}
               href={href}

@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, Enum, Integer, JSON, String, func
+from sqlalchemy import DateTime, Enum, ForeignKey, Integer, JSON, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.enums import PipelineStage
@@ -11,6 +11,7 @@ if TYPE_CHECKING:
     from app.models.activity import Activity
     from app.models.intelligence import LeadIntelligence
     from app.models.task import SalesTask
+    from app.models.user import User
 
 
 class Lead(Base):
@@ -38,6 +39,9 @@ class Lead(Base):
         nullable=False,
         index=True,
     )
+    owner_user_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -56,3 +60,4 @@ class Lead(Base):
         passive_deletes=True,
         uselist=False,
     )
+    owner: Mapped["User | None"] = relationship(back_populates="owned_leads")

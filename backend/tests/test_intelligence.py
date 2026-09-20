@@ -178,6 +178,7 @@ def test_provider_selection():
     local_settings = Settings(
         DATABASE_URL="sqlite+pysqlite:///:memory:",
         CORS_ORIGINS="http://localhost:3000",
+        JWT_SECRET="test-only-jwt-secret-at-least-32-characters",
         AI_PROVIDER="local",
         _env_file=None,
     )
@@ -185,6 +186,7 @@ def test_provider_selection():
     openai_settings = Settings(
         DATABASE_URL="sqlite+pysqlite:///:memory:",
         CORS_ORIGINS="http://localhost:3000",
+        JWT_SECRET="test-only-jwt-secret-at-least-32-characters",
         AI_PROVIDER="openai",
         OPENAI_API_KEY="secret",
         OPENAI_MODEL="test-model",

@@ -2,14 +2,17 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.activity_routes import router as activity_router
+from app.api.audit_routes import router as audit_router
+from app.api.auth_routes import router as auth_router
 from app.api.errors import install_exception_handlers
 from app.api.intelligence_routes import router as intelligence_router
 from app.api.dashboard_routes import router as dashboard_router
 from app.api.routes import router as lead_router
 from app.api.task_routes import router as task_router
+from app.api.user_routes import router as user_router
 from app.core.config import Settings, settings
 from app.core.logging import configure_logging
-from app.core.rate_limit import DemoWriteRateLimitMiddleware
+from app.core.rate_limit import DemoWriteRateLimitMiddleware, LoginRateLimitMiddleware
 
 configure_logging()
 
@@ -35,6 +38,11 @@ def create_app(app_settings: Settings | None = None) -> FastAPI:
             window_seconds=active_settings.demo_rate_limit_window_seconds,
         )
     app.add_middleware(
+        LoginRateLimitMiddleware,
+        requests=active_settings.login_rate_limit_requests,
+        window_seconds=active_settings.login_rate_limit_window_seconds,
+    )
+    app.add_middleware(
         CORSMiddleware,
         allow_origins=active_settings.allowed_cors_origins,
         allow_credentials=True,
@@ -42,10 +50,13 @@ def create_app(app_settings: Settings | None = None) -> FastAPI:
         allow_headers=["*"],
     )
     app.include_router(dashboard_router)
+    app.include_router(auth_router)
     app.include_router(lead_router)
     app.include_router(activity_router)
     app.include_router(task_router)
     app.include_router(intelligence_router)
+    app.include_router(user_router)
+    app.include_router(audit_router)
     return app
 
 

@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { ErrorState, LoadingState } from "@/components/ui/state";
+import { useAuth } from "@/components/auth-provider";
 export function IntelligencePanel({
   leadId,
   onGenerated,
@@ -22,6 +23,7 @@ export function IntelligencePanel({
   leadId: number;
   onGenerated?: () => void;
 }) {
+  const { can } = useAuth();
   const loader = useCallback(async () => {
     try {
       return await api.intelligence(leadId);
@@ -68,10 +70,12 @@ export function IntelligencePanel({
             timeline, and open tasks. The deterministic local provider works
             without paid services.
           </p>
-          <Button className="mt-5" onClick={generate} disabled={generating}>
-            <Sparkles className="size-4" />
-            {generating ? "Generating…" : "Generate intelligence"}
-          </Button>
+          {can("intelligence:write") && (
+            <Button className="mt-5" onClick={generate} disabled={generating}>
+              <Sparkles className="size-4" />
+              {generating ? "Generating…" : "Generate intelligence"}
+            </Button>
+          )}
           {actionError && (
             <p className="mt-3 text-sm text-rose-700">{actionError}</p>
           )}
@@ -93,17 +97,19 @@ export function IntelligencePanel({
             {data.provider} provider · Generated {formatDate(data.generated_at)}
           </p>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={generate}
-          disabled={generating}
-        >
-          <RefreshCw
-            className={generating ? "size-4 animate-spin" : "size-4"}
-          />
-          {generating ? "Regenerating…" : "Regenerate"}
-        </Button>
+        {can("intelligence:write") && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={generate}
+            disabled={generating}
+          >
+            <RefreshCw
+              className={generating ? "size-4 animate-spin" : "size-4"}
+            />
+            {generating ? "Regenerating…" : "Regenerate"}
+          </Button>
+        )}
       </CardHeader>
       <CardContent className="space-y-6">
         <section>

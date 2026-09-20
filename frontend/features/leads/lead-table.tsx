@@ -17,7 +17,9 @@ import { Input, Select } from "@/components/ui/form-controls";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/state";
 import { LeadSummary } from "./lead-summary";
 import { DEMO_MODE } from "@/lib/config";
+import { useAuth } from "@/components/auth-provider";
 export function LeadTable() {
+  const { can } = useAuth();
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState("");
   const [stage, setStage] = useState("");
@@ -108,7 +110,8 @@ export function LeadTable() {
           title="No leads found"
           description="Adjust the filters or create a lead to begin qualification."
           action={
-            !DEMO_MODE && (
+            !DEMO_MODE &&
+            can("lead:create") && (
               <Link href="/leads/new">
                 <Button>
                   <Plus className="size-4" />
@@ -134,6 +137,7 @@ export function LeadTable() {
                     <Th onClick={() => toggleSort("score")}>Score</Th>
                     <Th>Temperature</Th>
                     <Th>Pipeline</Th>
+                    <Th>Owner</Th>
                     <Th onClick={() => toggleSort("updated_at")}>Updated</Th>
                   </tr>
                 </thead>
@@ -161,6 +165,9 @@ export function LeadTable() {
                       </td>
                       <td className="p-4">
                         <StageBadge stage={lead.pipeline_stage} />
+                      </td>
+                      <td className="p-4 text-xs text-slate-600">
+                        {lead.owner?.full_name ?? "Unassigned"}
                       </td>
                       <td className="p-4 text-xs text-slate-500">
                         {formatDate(lead.updated_at)}

@@ -5,6 +5,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 from app.core.enums import PipelineStage
 from app.schemas.activity import ActivityResponse
 from app.schemas.task import TaskResponse
+from app.schemas.user import UserSummary
 
 
 class LeadBase(BaseModel):
@@ -58,6 +59,8 @@ class LeadResponse(LeadBase):
     status: str
     score_reasons: list[str]
     pipeline_stage: PipelineStage
+    owner_user_id: int | None
+    owner: UserSummary | None = None
     created_at: datetime
     updated_at: datetime
 
@@ -74,6 +77,10 @@ class LeadListResponse(BaseModel):
 
 class LeadStageUpdate(BaseModel):
     stage: PipelineStage
+
+
+class LeadOwnerUpdate(BaseModel):
+    owner_user_id: int | None
 
 
 class LeadDetailResponse(BaseModel):

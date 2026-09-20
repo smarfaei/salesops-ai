@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Select, Textarea } from "@/components/ui/form-controls";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/state";
+import { useAuth } from "@/components/auth-provider";
 const icons: Record<
   ActivityType,
   React.ComponentType<{ className?: string }>
@@ -38,6 +39,7 @@ export function ActivityTimeline({
   leadId: number;
   refreshKey?: number;
 }) {
+  const { can } = useAuth();
   const loader = useCallback(() => {
     void refreshKey;
     return api.activities(leadId);
@@ -77,10 +79,16 @@ export function ActivityTimeline({
             Customer touchpoints and automatic system events
           </p>
         </div>
-        <Button size="sm" variant="outline" onClick={() => setOpen((x) => !x)}>
-          <MessageSquare className="size-4" />
-          Add activity
-        </Button>
+        {can("activity:write") && (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setOpen((x) => !x)}
+          >
+            <MessageSquare className="size-4" />
+            Add activity
+          </Button>
+        )}
       </CardHeader>
       <CardContent>
         {open && (
