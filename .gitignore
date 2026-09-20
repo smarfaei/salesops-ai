@@ -1,3 +1,13 @@
 .venv/
 __pycache__/
-*.pyc
+*.py[cod]
+.pytest_cache/
+.pip-tmp/
+.coverage
+htmlcov/
+.env
+.idea/
+.vscode/
+dist/
+build/
+*.egg-info/
