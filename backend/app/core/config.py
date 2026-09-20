@@ -14,6 +14,11 @@ class Settings(BaseSettings):
     openai_api_key: SecretStr | None = Field(default=None, alias="OPENAI_API_KEY")
     openai_model: str | None = Field(default=None, alias="OPENAI_MODEL")
     openai_timeout_seconds: float = Field(default=20.0, gt=0, le=120, alias="OPENAI_TIMEOUT_SECONDS")
+    cors_origins: str = Field(default="http://localhost:3000", alias="CORS_ORIGINS")
+
+    @property
+    def allowed_cors_origins(self) -> list[str]:
+        return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]
 
     model_config = SettingsConfigDict(
         env_file=".env",

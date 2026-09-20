@@ -2,7 +2,7 @@
 
 **AI-Powered Lead Qualification & Sales Automation Platform**
 
-SalesOps AI helps sales teams capture, qualify, prioritize, and act on incoming leads. The project currently contains **Phase 3: AI Sales Intelligence**—a production-style mini CRM backend with explainable lead scoring, pipeline management, activity history, follow-up tasks, and provider-based sales intelligence that works without a paid API.
+SalesOps AI helps sales teams capture, qualify, prioritize, and act on incoming leads. **Phase 4** is a full-stack, portfolio-quality sales operations workspace: a responsive Next.js dashboard backed by FastAPI, explainable scoring, pipeline management, activity history, follow-up tasks, and AI-assisted sales intelligence that works without a paid API.
 
 ## Current features
 
@@ -23,6 +23,9 @@ SalesOps AI helps sales teams capture, qualify, prioritize, and act on incoming 
 - PostgreSQL health check and structured application logging
 - Alembic-managed database schema
 - Automated API and scoring tests
+- Responsive executive dashboard with live KPIs and Recharts visualizations
+- Lead table, CRM record, pipeline board, task center, and analytics screens
+- Professional loading, empty, error, validation, and action states
 
 ## Technology stack
 
@@ -32,24 +35,33 @@ SalesOps AI helps sales teams capture, qualify, prioritize, and act on incoming 
 - Alembic migrations
 - Pytest and FastAPI TestClient
 - Docker Compose
+- Next.js 16, React 19, and strict TypeScript
+- Tailwind CSS 4 and shadcn/ui component conventions
+- Recharts and Lucide icons
+- Vitest and Testing Library
 
 ## Architecture
 
 ```text
-backend/
-├── app/
-│   ├── ai/         # local and optional OpenAI providers
-│   ├── api/        # routes and HTTP error handling
-│   ├── core/       # settings and logging
-│   ├── db/         # SQLAlchemy base and sessions
-│   ├── models/     # persistence models
-│   ├── schemas/    # request and response contracts
-│   ├── services/   # workflow and sales-intelligence orchestration
-│   ├── seed.py     # explicit, idempotent portfolio demo data
-│   └── main.py     # FastAPI application
-├── alembic/        # database migrations
-├── tests/          # behavior-focused test suite
-└── alembic.ini
+Browser :3000
+    │
+    ▼
+Next.js App Router + TypeScript
+    ├── app/          routes and layouts
+    ├── components/   reusable shadcn-style UI
+    ├── features/     dashboard, leads, pipeline, tasks, intelligence
+    ├── hooks/        remote-data lifecycle
+    └── lib/api.ts    centralized API client
+    │
+    ▼ HTTP / JSON
+FastAPI :8001
+    ├── api/          routes and HTTP error handling
+    ├── services/     scoring, workflow, and intelligence rules
+    ├── models/       SQLAlchemy persistence
+    └── schemas/      validated public contracts
+    │
+    ▼
+PostgreSQL 16 + Alembic
 ```
 
 The HTTP layer validates input and coordinates requests. Business rules live in focused service modules. SQLAlchemy models define `Lead → Activities`, `Lead → Tasks`, and `Lead → Latest Intelligence` relationships with database-enforced cascading. Pydantic schemas define every public API and provider response. Tables are created only through Alembic migrations.
@@ -83,13 +95,13 @@ Lead + Score + Pipeline + Recent Activities + Pending Tasks
 
 2. Replace the example password in `.env` and make the password in `DATABASE_URL` match.
 
-3. Build and start PostgreSQL and the API:
+3. Build and start PostgreSQL, FastAPI, and Next.js:
 
    ```bash
    docker compose up --build
    ```
 
-The API is available at `http://localhost:8000`. Interactive OpenAPI documentation is at `http://localhost:8000/docs`; the alternative documentation is at `http://localhost:8000/redoc`.
+The application is available at `http://localhost:3000`. The API and interactive documentation are at `http://localhost:8001` and `http://localhost:8001/docs`.
 
 Compose applies all pending migrations before starting the API. Existing Phase 1 leads are preserved and assigned to the `New` pipeline stage.
 
@@ -127,8 +139,19 @@ alembic upgrade head
 Run the API from the same directory:
 
 ```bash
-uvicorn app.main:app --reload
+uvicorn app.main:app --reload --port 8001
 ```
+
+Run the frontend in a second terminal:
+
+```bash
+cd frontend
+cp .env.example .env.local
+npm install
+npm run dev
+```
+
+`NEXT_PUBLIC_API_URL` selects the browser-facing API URL. `CORS_ORIGINS` is a comma-separated backend allowlist; the local default is `http://localhost:3000`. `API_PORT` and `FRONTEND_PORT` configure the Docker host ports.
 
 ## Tests
 
@@ -138,13 +161,24 @@ Tests use an isolated in-memory SQLite database and do not alter development dat
 pytest
 ```
 
-The suite covers scoring, Phase 1 CRUD, pipeline transitions and history, activities, task lifecycle and filtering, lead details, demo data, cascading deletes, validation, pagination, and health checks.
+Frontend checks:
+
+```bash
+cd frontend
+npm run lint
+npm run typecheck
+npm test
+npm run build
+```
+
+The suites cover scoring, CRUD, pipeline transitions and history, dashboard aggregates, activities, task lifecycle, intelligence, demo data, API client behavior, UI mappings, and critical lead/intelligence rendering.
 
 ## API summary
 
 | Method | Path | Purpose |
 |---|---|---|
 | `GET` | `/health` | Verify API and database connectivity |
+| `GET` | `/dashboard/summary` | Read KPI and chart aggregates |
 | `GET` | `/leads` | List, search, filter, sort, and paginate leads |
 | `POST` | `/leads` | Create and score a lead |
 | `GET` | `/leads/{id}` | Retrieve one lead |
@@ -195,8 +229,8 @@ Example response excerpt:
 Generate and retrieve intelligence:
 
 ```bash
-curl -X POST http://localhost:8000/leads/1/intelligence
-curl http://localhost:8000/leads/1/intelligence
+curl -X POST http://localhost:8001/leads/1/intelligence
+curl http://localhost:8001/leads/1/intelligence
 ```
 
 Regeneration updates the existing intelligence record. Only the first generation adds a timeline activity, avoiding repeated activity noise.
@@ -212,22 +246,31 @@ python -m app.seed
 
 The command is idempotent. Run `python -m app.seed --reset` to replace only the six known demo companies while preserving all other leads. The dataset represents SaaS, construction, digital marketing, e-commerce, technology consulting, and manufacturing businesses across different scores, stages, activities, priorities, and task states.
 
-## Example workflow
+## Portfolio demo workflow
 
-1. Create Michael Brown at Acme Technologies with `POST /leads`.
-2. Inspect the calculated score, qualification status, reasons, and default `New` stage.
-3. Move the lead to `Qualified` with `PATCH /leads/{id}/stage`.
-4. Retrieve the automatically recorded stage-change activity.
-5. Add a discovery-call task with `POST /leads/{id}/tasks`.
-6. Complete it with `POST /tasks/{id}/complete` and verify `completed_at`.
-7. Move the lead to `Contacted` and retrieve the complete lead detail view.
+1. Open the Dashboard and review the live KPIs and distributions.
+2. Open **OrbitFlow SaaS** from Leads and inspect its Hot score and Qualified stage.
+3. Generate or review Sales Intelligence, buying signals, and the next best action.
+4. Copy the personalized follow-up subject and message.
+5. Add and complete a lead follow-up task.
+6. Move the lead from the Pipeline board.
+7. Return to the lead and confirm the stage change in the activity timeline.
+8. Return to the Dashboard to see the updated business view.
+
+## Dashboard screenshots
+
+Add final portfolio captures here after starting the seeded stack:
+
+- `docs/screenshots/dashboard.png` — executive KPI and chart view
+- `docs/screenshots/lead-detail.png` — CRM record and AI-assisted intelligence
+- `docs/screenshots/pipeline.png` — six-stage pipeline board
 
 ## Roadmap
 
 - **Phase 1 — complete:** backend foundation, scoring, CRUD, PostgreSQL, migrations, tests, Docker, documentation
 - **Phase 2 — complete:** sales pipeline, activity timeline, follow-up tasks, lead detail API, and demo dataset
 - **Phase 3 — complete:** provider-based AI sales intelligence, explainable recommendations, follow-up generation, persistence, and fallback handling
-- **Phase 4:** professional dashboard for leads, pipeline, tasks, timelines, and intelligence
+- **Phase 4 — complete:** professional full-stack dashboard for leads, pipeline, tasks, timelines, analytics, and intelligence
 - **Phase 5:** authentication, ownership, workspaces, ingestion, audit controls, and deployment
 
-No paid API is required for the complete Phase 1–3 demo.
+No paid API is required for the complete Phase 1–4 demo.
