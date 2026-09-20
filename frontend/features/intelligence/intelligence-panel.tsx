@@ -79,8 +79,8 @@ export function IntelligencePanel({
       </Card>
     );
   return (
-    <Card>
-      <CardHeader>
+    <Card className="overflow-hidden border-blue-200 shadow-sm ring-1 ring-blue-50">
+      <CardHeader className="border-b border-blue-100 bg-blue-50/40 pb-4">
         <div>
           <div className="flex items-center gap-2">
             <BrainCircuit className="size-5 text-blue-700" />

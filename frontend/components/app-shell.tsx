@@ -81,13 +81,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </div>
           </div>
         </header>
-        <nav className="flex overflow-x-auto border-b border-slate-200 bg-white px-2 py-2 lg:hidden">
+        <nav className="grid grid-cols-5 border-b border-slate-200 bg-white px-1 py-2 lg:hidden">
           {nav.map(({ href, label, icon: Icon }) => (
             <Link
               key={href}
               href={href}
               className={cn(
-                "flex min-w-20 flex-col items-center gap-1 rounded-lg px-3 py-2 text-xs",
+                "flex min-w-0 flex-col items-center gap-1 rounded-lg px-1 py-2 text-[11px] sm:text-xs",
                 (href === "/" ? path === href : path.startsWith(href))
                   ? "bg-blue-50 text-blue-700"
                   : "text-slate-500",
@@ -98,7 +98,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </Link>
           ))}
         </nav>
-        <main className="mx-auto max-w-[1600px] p-4 sm:p-6 lg:p-8">
+        <main className="mx-auto max-w-[1600px] p-4 sm:p-6 lg:p-8 xl:p-10">
           {children}
         </main>
       </div>

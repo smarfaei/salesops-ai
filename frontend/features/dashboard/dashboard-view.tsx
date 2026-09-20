@@ -45,34 +45,55 @@ export function DashboardView({ analytics = false }: { analytics?: boolean }) {
       />
     );
   const cards = [
-    { label: "Total Leads", value: data.kpis.total_leads, icon: Users },
-    { label: "Hot Leads", value: data.kpis.hot_leads, icon: Flame },
+    {
+      label: "Total Leads",
+      value: data.kpis.total_leads,
+      icon: Users,
+      tone: "bg-slate-100 text-slate-700",
+    },
+    {
+      label: "Hot Leads",
+      value: data.kpis.hot_leads,
+      icon: Flame,
+      tone: "bg-rose-50 text-rose-700",
+    },
     {
       label: "Qualified Leads",
       value: data.kpis.qualified_leads,
       icon: CheckCircle2,
+      tone: "bg-blue-50 text-blue-700",
     },
     {
-      label: "Open Pipeline",
+      label: "Open Pipeline Value",
       value: formatCurrency(data.kpis.open_pipeline_value),
       icon: CircleDollarSign,
+      tone: "bg-emerald-50 text-emerald-700",
     },
-    { label: "Won Leads", value: data.kpis.won_leads, icon: BriefcaseBusiness },
+    {
+      label: "Won Leads",
+      value: data.kpis.won_leads,
+      icon: BriefcaseBusiness,
+      tone: "bg-violet-50 text-violet-700",
+    },
     {
       label: "Pending Tasks",
       value: data.kpis.pending_tasks,
       icon: ListChecks,
+      tone: "bg-amber-50 text-amber-700",
     },
   ];
   return (
     <div className="space-y-6">
       {!analytics && (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
-          {cards.map(({ label, value, icon: Icon }) => (
-            <Card key={label}>
+          {cards.map(({ label, value, icon: Icon, tone }) => (
+            <Card
+              key={label}
+              className="overflow-hidden transition-shadow hover:shadow-md"
+            >
               <CardContent className="pt-5">
                 <div className="flex items-center justify-between">
-                  <div className="rounded-lg bg-slate-100 p-2 text-slate-600">
+                  <div className={`rounded-lg p-2 ${tone}`}>
                     <Icon className="size-4" />
                   </div>
                   <span className="text-xs text-slate-400">Live</span>
@@ -93,7 +114,7 @@ export function DashboardView({ analytics = false }: { analytics?: boolean }) {
           title="Lead qualification"
           subtitle="Hot, warm and cold distribution"
         >
-          <ResponsiveContainer width="100%" height={270}>
+          <ResponsiveContainer width="100%" height={280}>
             <PieChart>
               <Pie
                 data={data.lead_status_distribution}
@@ -117,7 +138,7 @@ export function DashboardView({ analytics = false }: { analytics?: boolean }) {
           title="Pipeline distribution"
           subtitle="Leads at every sales stage"
         >
-          <ResponsiveContainer width="100%" height={300}>
+          <ResponsiveContainer width="100%" height={280}>
             <BarChart data={data.pipeline_distribution}>
               <CartesianGrid vertical={false} stroke="#e2e8f0" />
               <XAxis dataKey="name" tick={{ fontSize: 11 }} />

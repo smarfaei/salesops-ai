@@ -4,12 +4,14 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.ai.providers.local import LocalAIProvider
 from app.core.enums import ActivityType, PipelineStage, TaskPriority, TaskStatus
 from app.db.session import SessionLocal
 from app.models.lead import Lead
 from app.models.task import SalesTask
 from app.services.activity import create_activity
 from app.services.scoring import score_lead
+from app.services.intelligence import SalesIntelligenceService
 
 DEMO_LEADS = [
     {
@@ -145,6 +147,16 @@ def seed_demo_data(db: Session, *, reset: bool = False) -> dict[str, int]:
     return {"created": created, "existing": len(DEMO_LEADS) - created}
 
 
+def seed_demo_intelligence(db: Session) -> int:
+    """Prepare the flagship lead with local, deterministic intelligence."""
+    lead = db.scalar(select(Lead).where(Lead.company == "OrbitFlow SaaS"))
+    if lead is None:
+        raise RuntimeError("Seed demo data before generating demo intelligence")
+    SalesIntelligenceService(LocalAIProvider()).generate_for_lead(db, lead)
+    db.commit()
+    return lead.id
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Seed realistic SalesOps AI demo data")
     parser.add_argument(
@@ -152,10 +164,18 @@ def main() -> None:
         action="store_true",
         help="Replace only the six known demo companies; other records are preserved",
     )
+    parser.add_argument(
+        "--with-intelligence",
+        action="store_true",
+        help="Generate deterministic local intelligence for OrbitFlow SaaS",
+    )
     args = parser.parse_args()
     with SessionLocal() as db:
         result = seed_demo_data(db, reset=args.reset)
+        intelligence_lead_id = seed_demo_intelligence(db) if args.with_intelligence else None
     print(f"Demo data ready: {result['created']} created, {result['existing']} already existed")
+    if intelligence_lead_id is not None:
+        print(f"Local intelligence ready for lead id={intelligence_lead_id}")
 
 
 if __name__ == "__main__":

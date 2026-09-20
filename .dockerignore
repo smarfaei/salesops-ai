@@ -8,9 +8,17 @@
 .coverage
 
 .env
-**/.env.local
+**/.env*
 
 **/node_modules
 **/.next
 
 work
+*.bak
+docs/screenshots
+.github
+docs
+backend/tests
+frontend/tests
+frontend/coverage
+README.md

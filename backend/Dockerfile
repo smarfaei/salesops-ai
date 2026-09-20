@@ -8,9 +8,13 @@ WORKDIR /app
 COPY requirements.txt ./requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
-COPY backend/alembic.ini ./alembic.ini
-COPY backend/alembic ./alembic
-COPY backend/app ./app
+RUN addgroup --system app && adduser --system --ingroup app app
+
+COPY --chown=app:app backend/alembic.ini ./alembic.ini
+COPY --chown=app:app backend/alembic ./alembic
+COPY --chown=app:app backend/app ./app
+
+USER app
 
 EXPOSE 8000
 

@@ -2,10 +2,16 @@
 __pycache__/
 *.py[cod]
 .pytest_cache/
+.pnpm-store/
 .pip-tmp/
 .coverage
 htmlcov/
 .env
+.env.*
+!.env.example
+!**/.env.example
+*.pem
+*.key
 .idea/
 .vscode/
 dist/

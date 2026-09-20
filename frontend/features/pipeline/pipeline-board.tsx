@@ -9,6 +9,14 @@ import { useApi } from "@/hooks/use-api";
 import { StatusBadge } from "@/components/lead-badges";
 import { Select } from "@/components/ui/form-controls";
 import { ErrorState, LoadingState } from "@/components/ui/state";
+const stageAccent: Record<PipelineStage, string> = {
+  New: "border-t-slate-400",
+  Qualified: "border-t-blue-500",
+  Contacted: "border-t-cyan-500",
+  Proposal: "border-t-violet-500",
+  Won: "border-t-emerald-500",
+  Lost: "border-t-stone-400",
+};
 export function PipelineBoard() {
   const loader = useCallback(
     () => api.leads({ page_size: 100, sort_by: "score", sort_order: "desc" }),
@@ -52,7 +60,10 @@ export function PipelineBoard() {
           {stages.map((stage) => {
             const leads = data.items.filter((x) => x.pipeline_stage === stage);
             return (
-              <section key={stage} className="rounded-xl bg-slate-100/80 p-3">
+              <section
+                key={stage}
+                className={`rounded-xl border-t-2 bg-slate-100/80 p-3 ${stageAccent[stage]}`}
+              >
                 <div className="mb-3 flex items-center justify-between">
                   <h2 className="text-sm font-bold text-slate-800">{stage}</h2>
                   <span className="rounded-full bg-white px-2 py-0.5 text-xs font-semibold text-slate-500">
@@ -63,7 +74,7 @@ export function PipelineBoard() {
                   {leads.map((lead) => (
                     <article
                       key={lead.id}
-                      className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm"
+                      className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-shadow hover:shadow-md"
                     >
                       <div className="flex items-start justify-between gap-2">
                         <Link
