@@ -1,5 +1,7 @@
 # Portfolio Screenshot Plan
 
+Final captures live in `docs/assets/` and use the public Railway demo at a consistent desktop viewport.
+
 ## Preparation
 
 1. Use a dedicated local demo database.
@@ -50,6 +52,16 @@ Do not add fake logos, fabricated metrics, or customer claims.
 - Use the Pending view and show the overdue Stonebridge task plus upcoming work.
 - Include task title, lead, priority, due time, status, and action buttons.
 - Capture the filter row so the operational workflow is obvious.
+
+## `07-login-rbac.png`
+
+- Route: `/login`
+- Show all four public demo roles without exposing the demo-only password.
+
+## `08-audit-log.png`
+
+- Route: `/audit` as Admin or Sales Manager.
+- Show only fictional actors and sanitized event metadata.
 
 ## Final Review
 

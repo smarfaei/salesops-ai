@@ -2,10 +2,44 @@
 
 **AI-Powered Lead Qualification & Sales Automation Platform**
 
+[![CI](https://github.com/smarfaei/salesops-ai/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/smarfaei/salesops-ai/actions/workflows/ci.yml)
+[![Live Demo](https://img.shields.io/badge/Live_Demo-open-2563eb)](https://frontend-production-9ca5.up.railway.app/)
+[![Case Study](https://img.shields.io/badge/Case_Study-read-0f172a)](docs/CASE_STUDY.md)
+
 SalesOps AI is a full-stack sales operations workspace that helps teams turn incoming B2B leads into clear priorities and actionable follow-ups. It combines explainable scoring, pipeline workflow, activity history, task management, analytics, and structured AI-assisted recommendations in one professional CRM-style experience.
 
-> **Hero screenshot placeholder:** `docs/screenshots/01-dashboard.png`
-> Run the documented demo reset before capturing portfolio images.
+**[Open the live demo](https://frontend-production-9ca5.up.railway.app/)** · **[Read the case study](docs/CASE_STUDY.md)** · **[View CI](https://github.com/smarfaei/salesops-ai/actions/workflows/ci.yml)**
+
+![SalesOps AI executive dashboard](docs/assets/01-dashboard.png)
+
+> **Safe public demo:** Every person, company, activity, and metric is fictional. Demo Mode keeps destructive controls disabled, uses deterministic local intelligence, and may periodically restore the seeded dataset.
+
+## Product Tour
+
+| Lead qualification | OrbitFlow sales intelligence |
+| --- | --- |
+| ![Lead list with Hot, Warm, and Cold scores](docs/assets/02-leads.png) | ![OrbitFlow lead detail and sales intelligence](docs/assets/03-lead-detail.png) |
+
+| Six-stage pipeline | Follow-up task center |
+| --- | --- |
+| ![Sales pipeline](docs/assets/05-pipeline.png) | ![Sales task center](docs/assets/06-tasks.png) |
+
+<details>
+<summary><strong>More real product screens</strong></summary>
+
+### AI-assisted follow-up and activity history
+
+![AI-assisted follow-up and activity timeline](docs/assets/04-ai-intelligence.png)
+
+### Login and role selection
+
+![Login and public demo roles](docs/assets/07-login-rbac.png)
+
+### Audit log
+
+![Security-relevant audit history](docs/assets/08-audit-log.png)
+
+</details>
 
 ## Business Problem
 
@@ -42,6 +76,8 @@ SalesOps AI stores and scores every lead with a transparent ruleset, classifies 
 - Lead ownership controls and a security-relevant audit trail
 
 ## Demo Workflow
+
+Choose a role on the [public login screen](https://frontend-production-9ca5.up.railway.app/login). Use only the intentionally public, demo-only credential supplied with the deployment; no password is stored in this repository.
 
 Reset the six fictional B2B scenarios, their activities and tasks, and the OrbitFlow intelligence result:
 
@@ -313,16 +349,18 @@ Regeneration updates the existing intelligence record. Only the first generation
 
 ## Screenshot Plan
 
-Add final portfolio captures here after starting the seeded stack:
+The final portfolio captures come from the public Railway deployment at a consistent desktop viewport:
 
-- `docs/screenshots/01-dashboard.png` — executive KPI and chart view
-- `docs/screenshots/02-leads.png` — qualified lead table
-- `docs/screenshots/03-lead-detail.png` — complete CRM record
-- `docs/screenshots/04-ai-intelligence.png` — AI-assisted recommendation
-- `docs/screenshots/05-pipeline.png` — six-stage pipeline board
-- `docs/screenshots/06-tasks.png` — follow-up task center
+- `docs/assets/01-dashboard.png` — executive KPI and chart view
+- `docs/assets/02-leads.png` — qualified lead table
+- `docs/assets/03-lead-detail.png` — complete CRM record
+- `docs/assets/04-ai-intelligence.png` — suggested follow-up and activity history
+- `docs/assets/05-pipeline.png` — six-stage pipeline board
+- `docs/assets/06-tasks.png` — follow-up task center
+- `docs/assets/07-login-rbac.png` — authentication and role selection
+- `docs/assets/08-audit-log.png` — sanitized audit events
 
-See [the detailed capture checklist](docs/SCREENSHOTS.md), [the case study](docs/CASE_STUDY.md), [the demo video script](docs/DEMO_VIDEO.md), and [the deployment guide](docs/DEPLOYMENT.md).
+See [the detailed capture checklist](docs/SCREENSHOTS.md), [the case study](docs/CASE_STUDY.md), [the final recording plan](docs/FINAL_DEMO_VIDEO.md), and [the deployment guide](docs/DEPLOYMENT.md).
 
 ## Roadmap
 
