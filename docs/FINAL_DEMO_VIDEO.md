@@ -1,48 +1,36 @@
 # SalesOps AI — Final 90-Second Demo Recording Plan
 
-The current Work environment can capture still images but does not provide a supported screen-recording or MP4 export path. This plan is therefore the exact handoff for recording the real public app. Do not substitute mock or generated UI.
+Record the public Railway deployment at 1600 × 900 or 1440 × 900. Use only the seeded fictional accounts and data. Hide bookmarks, notifications, developer tools, and the pointer whenever it is not demonstrating an action. Start with the Admin demo session ready and OrbitFlow SaaS unchanged from the seeded presentation state.
 
-## Recording setup
+## Shot-by-shot plan
 
-- Open the [live demo](https://frontend-production-9ca5.up.railway.app/) at a 1440×1000 desktop viewport and 100% zoom.
-- Use the seeded fictional data only. Close unrelated tabs, notifications, DevTools, and password managers.
-- Sign in as Sales Representative for the product flow. Keep the demo-only password off-screen.
-- Record the browser content at 30 fps. Export 1080p H.264 at a moderate bitrate.
-- Rehearse the task and pipeline actions once, then restore the demo before the final take.
-
-## Exact timeline
-
-| Time | Screen and clicks | On-screen caption | Optional voice-over |
+| Time | Exact action | On-screen caption | Optional voice-over |
 | --- | --- | --- | --- |
-| 00–04 | Start on the Dashboard with the sidebar and KPI row visible. Hold still for the reveal. | **SalesOps AI** · Explainable lead qualification and sales automation | “SalesOps AI turns incoming B2B leads into a clear, actionable sales workflow.” |
-| 04–12 | Slowly move attention across Total Leads, Hot Leads, Qualified Leads, Open Pipeline Value, Won Leads, and Pending Tasks; then the two top charts. | Live KPIs and sales analytics | “The live dashboard summarizes qualification, pipeline value, won opportunities, and follow-up work.” |
-| 12–20 | Click **Leads**. Keep all filters clear so OrbitFlow, Cartloom, and Hot/Warm/Cold badges are visible. | Transparent 0–100 scoring · Hot / Warm / Cold | “Every lead is scored by transparent backend rules and classified as Hot, Warm, or Cold.” |
-| 20–31 | Click **Michael Brown — OrbitFlow SaaS**. Pause on 90/100, Hot, Qualified, $9,000, company size, and score reasons. | OrbitFlow SaaS · 90/100 Hot · Qualified | “OrbitFlow brings the lead profile, explainable score, owner, stage, tasks, and history into one record.” |
-| 31–44 | Frame **Sales Intelligence**. Show the qualification summary, buying signals, risks, and **Next best action**. | Evidence-backed signals · Risks · Next best action | “The intelligence layer uses known lead and workflow data to surface evidence-backed signals, risks to validate, and a reasoned next action.” |
-| 44–52 | Scroll to **Suggested follow-up**. Pause on the subject and body; click **Copy** once. | Human-reviewed follow-up draft | “It also prepares a personalized follow-up for a representative to review before use.” |
-| 52–63 | In **Lead tasks**, click **Create task**. Enter `Confirm discovery call agenda`, choose High priority and tomorrow, save, then click its Complete checkmark. | Recommendation → trackable work | “Recommendations can become trackable work with priority, due dates, and completion state.” |
-| 63–73 | Click **Pipeline**. On OrbitFlow, change the stage from **Qualified** to **Contacted** and wait for the success state. | Real backend pipeline workflow | “Pipeline changes use the real backend workflow, not local mock state.” |
-| 73–80 | Reopen OrbitFlow and scroll to **Activity timeline** so the stage-change and task events are visible. | Automatic activity history | “Meaningful workflow changes are recorded automatically for shared context.” |
-| 80–86 | Sign out. Hold the Login screen long enough to show the four public roles. If desired, cut to the prepared Audit Log still for one second. | Admin · Manager · Sales Rep · Viewer | “Four role-specific views combine centralized permissions, ownership, and auditability.” |
-| 86–90 | Cut to the end card described below. | **SalesOps AI** · Live Demo · GitHub | “Explore the live demo or review the complete implementation on GitHub.” |
+| 0–6 sec | Begin on a clean title card, then reveal **Dashboard** without moving the pointer. | **SalesOps AI**<br>AI-Powered Lead Qualification & Sales Automation | “SalesOps AI turns inbound B2B leads into clear priorities and actionable follow-ups.” |
+| 6–15 sec | Hold on the KPI row, then move once across **Total Leads**, **Hot Leads**, **Open Pipeline Value**, and the qualification/pipeline charts. | **Live sales operations overview** | “The live dashboard makes qualification, pipeline value, stage distribution, and follow-up workload visible at a glance.” |
+| 15–23 sec | Click **Leads**. Pause on all six rows; point briefly to Score, Temperature, and Pipeline. | **Explainable qualification: Hot · Warm · Cold** | “Every lead receives a transparent score and a consistent Hot, Warm, or Cold classification.” |
+| 23–35 sec | Click **Michael Brown**. Let the OrbitFlow SaaS detail page settle. Point to the 90/100 score, $9,000 budget, Qualified stage, owner, and activity timeline. | **One complete lead workspace** | “OrbitFlow brings the commercial context, ownership, tasks, and history into one record.” |
+| 35–48 sec | In **Sales Intelligence**, move down the qualification summary, Buying signals, Risks to validate, and Next best action. Do not click Regenerate. | **Evidence-backed AI Sales Intelligence** | “The local intelligence provider uses known lead evidence to explain buying signals, surface risks, and recommend the next best action.” |
+| 48–57 sec | Scroll just enough to reveal **Suggested follow-up**. Select **Copy** once only if the copy confirmation is visually clean. | **Personalized, human-reviewed follow-up** | “It also drafts a personalized follow-up while keeping the recommendation advisory and reviewable.” |
+| 57–66 sec | Click **Create task**, enter `Confirm discovery agenda`, choose a near-future due date and Medium priority, then save. Immediately click its checkmark to complete it. | **Follow-up work stays visible** | “Tasks turn the recommendation into trackable sales work, from creation through completion.” |
+| 66–75 sec | Click **Pipeline**. On a non-hero demo lead, change one stage by a single step and wait for the board to settle. | **Every stage change is recorded** | “The six-stage pipeline keeps opportunities moving and records every successful transition.” |
+| 75–82 sec | Return to that lead and show the new stage-change timeline entry, then open **Audit** for the corresponding safe event view. | **Auditable activity and access history** | “Timeline and audit events preserve who changed what and when.” |
+| 82–88 sec | Sign out. Hold on the login screen and its four public demo roles; do not enter the password on camera. | **Role-focused demo accounts** | “Admin, Manager, Sales Rep, and Viewer roles demonstrate centralized permissions and ownership.” |
+| 88–90 sec | Cut to the closing card. | **SalesOps AI**<br>Live Demo · GitHub<br>frontend-production-9ca5.up.railway.app | “Explore the live demo and full source on GitHub.” |
 
-## End card
+## Recording notes
 
-```text
-SalesOps AI
-AI-Powered Lead Qualification & Sales Automation
+- Use one pointer path per shot; avoid circles, rapid movements, zoom effects, and repeated clicks.
+- Wait for every loading state to disappear before continuing.
+- Do not expose passwords, cookies, tokens, Railway variables, browser storage, or developer tools.
+- The task and stage changes are safe demo interactions, but run the guarded Railway reset after recording so the public dataset returns to its canonical six-lead state.
+- Record the UI first, then add the title/caption cards in editing. Keep transitions to 150–250 ms crossfades.
+- Use a neutral soundtrack only if it remains below the narration and does not distract from product behavior.
 
-Live Demo  frontend-production-9ca5.up.railway.app
-GitHub     github.com/smarfaei/salesops-ai
+## Final preflight
 
-FastAPI · PostgreSQL · Next.js · Explainable AI-assisted Sales Operations
-```
-
-## Clean-take checklist
-
-- Dashboard and every destination finish loading before the shot begins.
-- No cursor covers a KPI, score, name, button, or caption.
-- No password, token, browser profile, notification, or personal information appears.
-- The task and stage changes succeed visibly; if either fails, discard that take.
-- After recording, restore the seeded demo so the portfolio starts in its canonical state.
-- Keep the MP4 outside Git unless it is very small. Prefer YouTube or Loom, then add the hosted link and a lightweight thumbnail to the README.
+1. Reset with `python -m app.seed --reset --with-intelligence --with-users` in the Railway backend service.
+2. Confirm six leads, OrbitFlow intelligence, the stage distribution, varied tasks, and a clean Audit Log.
+3. Sign in as Admin, open Dashboard, and wait until all charts render.
+4. Record a silent practice pass in under 90 seconds.
+5. Capture the final pass, restore the demo dataset again, and verify the public Dashboard.

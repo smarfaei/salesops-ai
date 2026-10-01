@@ -2,44 +2,15 @@
 
 **AI-Powered Lead Qualification & Sales Automation Platform**
 
-[![CI](https://github.com/smarfaei/salesops-ai/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/smarfaei/salesops-ai/actions/workflows/ci.yml)
-[![Live Demo](https://img.shields.io/badge/Live_Demo-open-2563eb)](https://frontend-production-9ca5.up.railway.app/)
-[![Case Study](https://img.shields.io/badge/Case_Study-read-0f172a)](docs/CASE_STUDY.md)
+[![CI](https://github.com/smarfaei/salesops-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/smarfaei/salesops-ai/actions/workflows/ci.yml)
 
-SalesOps AI is a full-stack sales operations workspace that helps teams turn incoming B2B leads into clear priorities and actionable follow-ups. It combines explainable scoring, pipeline workflow, activity history, task management, analytics, and structured AI-assisted recommendations in one professional CRM-style experience.
+[**Live Demo**](https://frontend-production-9ca5.up.railway.app/) · [**GitHub**](https://github.com/smarfaei/salesops-ai) · [**Case Study**](docs/CASE_STUDY.md)
 
-**[Open the live demo](https://frontend-production-9ca5.up.railway.app/)** · **[Read the case study](docs/CASE_STUDY.md)** · **[View CI](https://github.com/smarfaei/salesops-ai/actions/workflows/ci.yml)**
+SalesOps AI turns incoming B2B leads into clear sales priorities and reviewable next actions. The production-style demo combines explainable scoring, a six-stage pipeline, activity history, follow-up tasks, live analytics, structured AI-assisted recommendations, secure authentication, ownership, RBAC, and auditability in one focused workspace.
 
-![SalesOps AI executive dashboard](docs/assets/01-dashboard.png)
+![SalesOps AI — AI-Powered Lead Qualification and Sales Automation](docs/assets/hero/readme-hero.png)
 
-> **Safe public demo:** Every person, company, activity, and metric is fictional. Demo Mode keeps destructive controls disabled, uses deterministic local intelligence, and may periodically restore the seeded dataset.
-
-## Product Tour
-
-| Lead qualification | OrbitFlow sales intelligence |
-| --- | --- |
-| ![Lead list with Hot, Warm, and Cold scores](docs/assets/02-leads.png) | ![OrbitFlow lead detail and sales intelligence](docs/assets/03-lead-detail.png) |
-
-| Six-stage pipeline | Follow-up task center |
-| --- | --- |
-| ![Sales pipeline](docs/assets/05-pipeline.png) | ![Sales task center](docs/assets/06-tasks.png) |
-
-<details>
-<summary><strong>More real product screens</strong></summary>
-
-### AI-assisted follow-up and activity history
-
-![AI-assisted follow-up and activity timeline](docs/assets/04-ai-intelligence.png)
-
-### Login and role selection
-
-![Login and public demo roles](docs/assets/07-login-rbac.png)
-
-### Audit log
-
-![Security-relevant audit history](docs/assets/08-audit-log.png)
-
-</details>
+The hero uses the real public Dashboard capture. Alternate social and marketplace exports are available in [`docs/assets/hero/`](docs/assets/hero/), with the production specification documented in [HERO_SPEC.md](docs/assets/hero/HERO_SPEC.md).
 
 ## Business Problem
 
@@ -75,9 +46,14 @@ SalesOps AI stores and scores every lead with a transparent ruleset, classifies 
 - Centralized role-based permissions for Admin, Manager, Sales Rep, and Viewer
 - Lead ownership controls and a security-relevant audit trail
 
-## Demo Workflow
+## Live Demo
 
-Choose a role on the [public login screen](https://frontend-production-9ca5.up.railway.app/login). Use only the intentionally public, demo-only credential supplied with the deployment; no password is stored in this repository.
+- Frontend: [frontend-production-9ca5.up.railway.app](https://frontend-production-9ca5.up.railway.app/)
+- Backend health: [salesops-ai-production.up.railway.app/health](https://salesops-ai-production.up.railway.app/health)
+- Environment: isolated Railway services with a dedicated fictional PostgreSQL dataset
+- Public-demo policy: local AI provider, no OpenAI key, no public API docs, protected canonical data, and lightweight write/login rate limiting
+
+## Demo Workflow
 
 Reset the six fictional B2B scenarios, their activities and tasks, and the OrbitFlow intelligence result:
 
@@ -103,7 +79,7 @@ When `--with-users` is supplied, the guarded demo seed creates four fictional ac
 | Sales Representative | `rep@salesops.demo`     |
 | Viewer               | `viewer@salesops.demo`  |
 
-Set `DEMO_ACCOUNT_PASSWORD` to an intentionally public, demo-only password before seeding and publish that password with the deployment. It is never stored in this repository, never becomes a production default, and demo-account seeding refuses to run when `DEMO_MODE=false`.
+The public login screen intentionally lists the four fictional role accounts. The demo-only password is supplied with the deployment and is not committed to this repository. Demo-account seeding refuses to run when `DEMO_MODE=false`.
 
 ## Architecture
 
@@ -257,6 +233,19 @@ The application is available at `http://localhost:3000`. The API and interactive
 
 Compose applies all pending migrations before starting the API. Existing leads are preserved and assigned to the `New` pipeline stage when needed.
 
+## Deployment Architecture
+
+```mermaid
+flowchart LR
+    VISITOR[Portfolio Visitor] -->|HTTPS| WEB[Railway · Next.js Frontend]
+    WEB -->|Credentialed API requests| API[Railway · FastAPI Backend]
+    API --> DB[(Railway · Dedicated PostgreSQL)]
+    API --> LOCAL[Deterministic Local AI Provider]
+    CI[GitHub Actions] -->|lint · typecheck · tests · build| REPO[GitHub Repository]
+```
+
+The live portfolio environment is deliberately isolated from customer data. Railway hosts the frontend, backend, and dedicated demo database; the backend exposes a health endpoint while interactive API documentation is disabled in demo mode. See [DEPLOYMENT.md](docs/DEPLOYMENT.md) for the environment contract and reset procedure.
+
 ## API Documentation
 
 | Method             | Path                       | Purpose                                              |
@@ -291,6 +280,8 @@ Compose applies all pending migrations before starting the API. Existing leads a
 | `GET`              | `/audit-logs`              | Paginated Admin/Manager audit history                |
 
 ## Testing
+
+GitHub Actions runs backend tests plus frontend linting, strict typechecking, component tests, and a production build on pushes and pull requests. The current workflow is visible from the CI badge at the top of this page.
 
 Tests use an isolated in-memory SQLite database and do not alter development data:
 
@@ -347,20 +338,41 @@ curl http://localhost:8001/leads/1/intelligence
 
 Regeneration updates the existing intelligence record. Only the first generation adds a timeline activity, avoiding repeated activity noise.
 
-## Screenshot Plan
+## Product Tour
 
-The final portfolio captures come from the public Railway deployment at a consistent desktop viewport:
+### Executive dashboard
 
-- `docs/assets/01-dashboard.png` — executive KPI and chart view
-- `docs/assets/02-leads.png` — qualified lead table
-- `docs/assets/03-lead-detail.png` — complete CRM record
-- `docs/assets/04-ai-intelligence.png` — suggested follow-up and activity history
-- `docs/assets/05-pipeline.png` — six-stage pipeline board
-- `docs/assets/06-tasks.png` — follow-up task center
-- `docs/assets/07-login-rbac.png` — authentication and role selection
-- `docs/assets/08-audit-log.png` — sanitized audit events
+Live KPIs, qualification mix, pipeline distribution, and follow-up workload from the seeded public demo.
 
-See [the detailed capture checklist](docs/SCREENSHOTS.md), [the case study](docs/CASE_STUDY.md), [the final recording plan](docs/FINAL_DEMO_VIDEO.md), and [the deployment guide](docs/DEPLOYMENT.md).
+![SalesOps AI executive dashboard](docs/assets/01-dashboard.png)
+
+### Lead qualification and AI intelligence
+
+Six intentional fictional leads demonstrate Hot, Warm, and Cold scoring. OrbitFlow SaaS shows the complete evidence-backed intelligence workflow.
+
+| Lead workspace | AI Sales Intelligence |
+| --- | --- |
+| ![OrbitFlow SaaS lead detail](docs/assets/03-lead-detail.png) | ![OrbitFlow SaaS AI sales intelligence](docs/assets/04-ai-intelligence.png) |
+
+![SalesOps AI lead qualification table](docs/assets/02-leads.png)
+
+### Pipeline and follow-up execution
+
+Leads span New, Qualified, Contacted, Proposal, Won, and Lost, while tasks preserve priorities and due-date variation.
+
+| Pipeline | Task Center |
+| --- | --- |
+| ![SalesOps AI six-stage pipeline](docs/assets/05-pipeline.png) | ![SalesOps AI task center](docs/assets/06-tasks.png) |
+
+### Authentication, RBAC, and auditability
+
+The public login demonstrates four fictional roles without exposing the demo password. Admin and Manager audit views preserve meaningful access and sales events.
+
+| Role-based login | Audit log |
+| --- | --- |
+| ![SalesOps AI public role-based login](docs/assets/07-login-rbac.png) | ![SalesOps AI audit log](docs/assets/08-audit-log.png) |
+
+See the [capture checklist](docs/SCREENSHOTS.md), [case study](docs/CASE_STUDY.md), [final 90-second recording plan](docs/FINAL_DEMO_VIDEO.md), [hero production specification](docs/assets/hero/HERO_SPEC.md), and [deployment guide](docs/DEPLOYMENT.md).
 
 ## Roadmap
 
@@ -370,6 +382,6 @@ See [the detailed capture checklist](docs/SCREENSHOTS.md), [the case study](docs
 - **Phase 4 — complete:** professional full-stack dashboard for leads, pipeline, tasks, timelines, analytics, and intelligence
 - **Phase 5 — complete:** portfolio polish, CI, deployment documentation, and repeatable demo preparation
 - **Phase 6 — complete:** secure authentication, centralized RBAC, lead ownership, audit controls, and role-focused demo accounts
-- **Future:** multi-tenancy/workspaces, password recovery, email verification, and production observability
+- **Future (deliberately out of scope for this portfolio release):** multi-tenancy/workspaces, password recovery, email verification, distributed rate limiting, and production observability
 
 No paid API is required for the complete portfolio demo. No customer results or performance claims are implied.

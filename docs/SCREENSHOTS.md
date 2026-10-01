@@ -1,11 +1,9 @@
 # Portfolio Screenshot Plan
 
-Final captures live in `docs/assets/` and use the public Railway demo at a consistent desktop viewport.
-
 ## Preparation
 
-1. Use a dedicated local demo database.
-2. Run `cd backend && python -m app.seed --reset --with-intelligence`.
+1. Use the dedicated Railway public-demo database.
+2. Run `cd backend && python -m app.seed --reset --with-intelligence --with-users` in the backend service.
 3. Start the full stack and use a 1440×1000 or larger desktop viewport.
 4. Keep browser zoom at 100%, hide bookmarks/personal tabs, and capture only the application.
 5. Confirm Dashboard shows exactly six fictional demo leads before capturing.
@@ -15,7 +13,7 @@ Do not add fake logos, fabricated metrics, or customer claims.
 ## `01-dashboard.png`
 
 - Route: `/`
-- Show all six KPI cards: 6 Total Leads, 3 Hot Leads, 1 Qualified Lead, open pipeline value, 1 Won Lead, and 4 Pending Tasks.
+- Show all six KPI cards: 6 Total Leads, 3 Hot Leads, 1 Qualified Lead, open pipeline value, 1 Won Lead, and the current seeded Pending Tasks total.
 - Include Lead Qualification and Pipeline Distribution charts; keep the lower chart row partially visible if needed.
 - Capture the desktop sidebar and SalesOps AI brand.
 
@@ -55,17 +53,20 @@ Do not add fake logos, fabricated metrics, or customer claims.
 
 ## `07-login-rbac.png`
 
-- Route: `/login`
-- Show all four public demo roles without exposing the demo-only password.
+- Sign out only after every authenticated screenshot is complete.
+- Show the four public fictional role accounts and the complete sign-in card.
+- Keep the password field empty and never expose the demo password in the image.
 
 ## `08-audit-log.png`
 
-- Route: `/audit` as Admin or Sales Manager.
-- Show only fictional actors and sanitized event metadata.
+- Capture as Admin after the seeded dataset has produced a few meaningful safe events.
+- Show successful login, task creation, intelligence generation, and activity creation.
+- Exclude QA/test junk, secrets, request headers, and internal metadata.
 
 ## Final Review
 
 - Use consistent dimensions and file naming.
 - Check that no API keys, local paths, browser profiles, or personal notifications appear.
 - Prefer PNG for crisp UI text.
+- Save the final set under `docs/assets/` using the exact numbered names above.
 - Re-run the demo reset after any screenshot interaction that changes stages or tasks.
